@@ -41,7 +41,7 @@ const Navbar = async () => {
             Quizes
           </Link>
           <Link 
-            href="/turnee" 
+            href="/tournaments" 
             className="text-sm font-medium transition-colors hover:text-primary"
             aria-label="Navigare către pagina de turnee"
           >

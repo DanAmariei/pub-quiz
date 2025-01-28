@@ -79,7 +79,7 @@ export default function HostQuizForm({ quizes, tournaments }: HostQuizFormProps)
               <SelectContent>
                 {quizes.map((quiz) => (
                   <SelectItem key={quiz.id} value={quiz.id}>
-                    {quiz.name} ({quiz.category} - {
+                    {quiz.title} ({quiz.category} - {
                       quiz.difficulty === 'easy' ? 'Ușor' : 
                       quiz.difficulty === 'medium' ? 'Mediu' : 'Dificil'
                     })

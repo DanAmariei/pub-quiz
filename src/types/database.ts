@@ -24,7 +24,7 @@ export interface Database {
 export interface Quiz {
   id: string
   created_at: string
-  name: string
+  title: string
   category: string
   difficulty: 'easy' | 'medium' | 'hard'
   questions: {

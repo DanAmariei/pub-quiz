@@ -65,6 +65,6 @@ export async function createTournament(formData: FormData) {
     return { error: error.message }
   }
 
-  revalidatePath('/turnee')
+  revalidatePath('/tournaments')
   return { success: true }
 } 

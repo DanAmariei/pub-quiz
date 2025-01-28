@@ -59,7 +59,7 @@ export default async function TournamentDetailsPage({
       <div className="flex flex-col items-center gap-6">
         <div className="flex items-center gap-4 w-full max-w-3xl">
           <Button variant="outline" size="icon" asChild>
-            <Link href="/turnee">
+            <Link href="/tournaments">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>

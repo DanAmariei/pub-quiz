@@ -25,7 +25,7 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
   return (
     <Card 
       className="cursor-pointer hover:border-primary transition-colors"
-      onClick={() => router.push(`/turnee/${tournament.id}`)}
+      onClick={() => router.push(`/tournaments/${tournament.id}`)}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg font-bold">{tournament.name}</CardTitle>
