@@ -35,13 +35,41 @@ export default function GameHost({
   user: { id: string }
 }) {
   const [game, setGame] = useState(initialGame)
+  const [rankings, setRankings] = useState([])
   const supabase = createClient()
 
   // Procesăm întrebările pentru a fi mai ușor de folosit
   const questions = game?.quiz?.questions?.map(q => q.question) || []
   const activeQuestionIndex = questions.findIndex(q => q.id === game.active_question_id)
   
+  // Funcție pentru a obține clasamentul
+  const fetchRankings = async () => {
+    const { data, error } = await supabase
+      .from('game_rankings')
+      .select(`
+        points,
+        rank,
+        participant_id,
+        profiles(username, avatar_url)
+      `)
+      .eq('game_id', game.id)
+      .order('points', { ascending: false }) // Sortăm descrescător după puncte
+
+    if (error) {
+      console.error('Error fetching rankings:', error)
+      return
+    }
+
+    console.log('Rankings fetched:', data)
+    setRankings(data)
+  }
+
   useEffect(() => {
+    // Fetch rankings if the game is finished on mount
+    if (game.is_finished) {
+      fetchRankings()
+    }
+
     const channel = supabase
       .channel(`game_${game.id}`)
       .on(
@@ -84,13 +112,16 @@ export default function GameHost({
             if (updatedGame) {
               console.log('Setting updated game:', updatedGame)
               setGame(updatedGame)
+
+              // Fetch rankings if the game has just finished
+              if (updatedGame.is_finished) {
+                fetchRankings()
+              }
             }
           }
         }
       )
-      .subscribe((status) => {
-        console.log('Subscription status:', status)
-      })
+      .subscribe()
 
     return () => {
       console.log('Cleaning up subscription')
@@ -219,6 +250,25 @@ export default function GameHost({
             <p className="text-muted-foreground">
               Verifică clasamentul pentru rezultate.
             </p>
+            <div className="mt-4">
+              {rankings.length > 0 ? (
+                <ul>
+                  {rankings.map((ranking) => (
+                    <li key={ranking.participant_id} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {ranking.profiles.avatar_url && (
+                          <img src={ranking.profiles.avatar_url} alt={ranking.profiles.username} className="w-8 h-8 rounded-full mr-2" />
+                        )}
+                        <span>{ranking.profiles.username}</span>
+                      </div>
+                      <span>{ranking.points} puncte</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Nu există clasamente disponibile.</p>
+              )}
+            </div>
           </div>
         )}
       </div>

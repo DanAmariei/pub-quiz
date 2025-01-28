@@ -42,6 +42,7 @@ export default function GameParticipant({
   const [selectedAnswer, setSelectedAnswer] = useState<string>('')
   const [hasAnswered, setHasAnswered] = useState(false)
   const [shuffledAnswers, setShuffledAnswers] = useState<string[]>([])
+  const [rankings, setRankings] = useState([])
   const supabase = createClient()
 
   // Găsim întrebarea activă
@@ -61,6 +62,28 @@ export default function GameParticipant({
       setHasAnswered(false)
     }
   }, [activeQuestion?.id])
+
+  // Funcție pentru a obține clasamentul
+  const fetchRankings = async () => {
+    const { data, error } = await supabase
+      .from('game_rankings')
+      .select(`
+        points,
+        rank,
+        participant_id,
+        profiles(username, avatar_url)
+      `)
+      .eq('game_id', game.id)
+      .order('points', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching rankings:', error)
+      return
+    }
+
+    console.log('Rankings fetched:', data)
+    setRankings(data)
+  }
 
   // Funcție pentru a reîncărca datele jocului
   const reloadGameData = async () => {
@@ -96,6 +119,10 @@ export default function GameParticipant({
 
     console.log('Game data reloaded:', updatedGame)
     setGame(updatedGame)
+
+    if (updatedGame.is_finished) {
+      fetchRankings()
+    }
   }
 
   // Ascultăm pentru modificări în joc
@@ -108,10 +135,9 @@ export default function GameParticipant({
       .on(
         'postgres_changes',
         {
-          event: '*', // Ascultăm toate evenimentele pentru debugging
+          event: '*',
           schema: 'public',
           table: 'games',
-          // filter: `id=eq.${game.id}`
         },
         (payload) => {
           console.log('Received payload:', payload)
@@ -122,7 +148,6 @@ export default function GameParticipant({
               new: payload.new
             })
             
-            // Reîncărcăm datele când se schimbă active_question_id sau is_finished
             if (payload.new.active_question_id !== payload.old.active_question_id ||
                 payload.new.is_finished !== payload.old.is_finished) {
               console.log('Relevant changes detected, reloading game data')
@@ -131,25 +156,20 @@ export default function GameParticipant({
           }
         }
       )
-
-    // Adăugăm handler pentru status changes
-    channel.subscribe((status) => {
-      console.log(`Subscription status for ${channelId}:`, status)
-      
-      if (status === 'SUBSCRIBED') {
-        console.log('Successfully subscribed to game updates')
-      } else if (status === 'CLOSED') {
-        console.log('Subscription closed')
-      } else if (status === 'CHANNEL_ERROR') {
-        console.error('Error in subscription channel')
-      }
-    })
+      .subscribe()
 
     return () => {
       console.log('Cleaning up subscription for channel:', channelId)
       supabase.removeChannel(channel)
     }
   }, [game.id])
+
+  // Verificăm dacă jocul este finalizat la montare
+  useEffect(() => {
+    if (game.is_finished) {
+      fetchRankings()
+    }
+  }, [game.is_finished])
 
   async function handleJoinGame() {
     const { error } = await supabase
@@ -165,7 +185,7 @@ export default function GameParticipant({
     }
 
     toast.success("Te-ai alăturat jocului!")
-    window.location.reload()
+    reloadGameData()
   }
 
   async function handleSubmitAnswer() {
@@ -252,6 +272,25 @@ export default function GameParticipant({
             <p className="text-muted-foreground">
               Verifică clasamentul pentru rezultate.
             </p>
+            <div className="mt-4">
+              {rankings.length > 0 ? (
+                <ul>
+                  {rankings.map((ranking) => (
+                    <li key={ranking.participant_id} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {ranking.profiles.avatar_url && (
+                          <img src={ranking.profiles.avatar_url} alt={ranking.profiles.username} className="w-8 h-8 rounded-full mr-2" />
+                        )}
+                        <span>{ranking.profiles.username}</span>
+                      </div>
+                      <span>{ranking.points} puncte</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Nu există clasamente disponibile.</p>
+              )}
+            </div>
           </div>
         ) : (
           <div className="text-center py-8">
