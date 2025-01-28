@@ -27,7 +27,7 @@ export default async function HomePage() {
   
   if (canHostQuiz) {
     const [quizesResult, tournamentsResult] = await Promise.all([
-      supabase.from('quizes').select('*').order('created_at', { ascending: false }),
+      supabase.from('quizzes').select('*').order('created_at', { ascending: false }),
       supabase.from('tournaments').select('id, name').eq('status', 'upcoming')
     ])
     

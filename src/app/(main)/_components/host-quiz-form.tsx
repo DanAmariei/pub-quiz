@@ -21,7 +21,8 @@ import { useState } from "react"
 import { PlayCircle } from "lucide-react"
 import type { Quiz } from "@/types/database"
 import { toast } from "sonner"
-import { startQuizSession } from "../_actions"
+import { startQuizGame } from "../_actions"
+import { useRouter } from "next/navigation"
 
 interface HostQuizFormProps {
   quizes: Quiz[]
@@ -33,17 +34,19 @@ interface HostQuizFormProps {
 
 export default function HostQuizForm({ quizes, tournaments }: HostQuizFormProps) {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   async function handleSubmit(formData: FormData) {
-    const result = await startQuizSession(formData)
-
+    const result = await startQuizGame(formData)
+    
     if (result.error) {
       toast.error(result.error)
       return
     }
 
-    toast.success("Sesiunea de quiz a fost creată!")
+    toast.success("Jocul a fost creat cu succes!")
     setOpen(false)
+    router.push(`/games/${result.gameId}`)
   }
 
   return (
@@ -56,12 +59,12 @@ export default function HostQuizForm({ quizes, tournaments }: HostQuizFormProps)
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Creează Sesiune Quiz</DialogTitle>
+          <DialogTitle>Creează Joc Nou</DialogTitle>
         </DialogHeader>
 
         <form action={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nume Sesiune</Label>
+            <Label htmlFor="name">Nume Joc</Label>
             <Input
               id="name"
               name="name"
@@ -110,7 +113,7 @@ export default function HostQuizForm({ quizes, tournaments }: HostQuizFormProps)
               Anulează
             </Button>
             <Button type="submit">
-              Creează Sesiune
+              Creează Joc
             </Button>
           </div>
         </form>

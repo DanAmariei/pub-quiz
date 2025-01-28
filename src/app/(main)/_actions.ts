@@ -67,4 +67,43 @@ export async function createTournament(formData: FormData) {
 
   revalidatePath('/tournaments')
   return { success: true }
+}
+
+export async function startQuizGame(formData: FormData) {
+  const { user, profile } = await getProfile() || {}
+  
+  if (!user || (!profile?.is_host && !profile?.is_admin)) {
+    return { error: 'Unauthorized' }
+  }
+
+  const name = formData.get('name') as string
+  const quizId = formData.get('quiz_id') as string
+  const tournamentId = formData.get('tournament_id') as string || null
+
+  const supabase = createClient()
+  
+  try {
+    // Creăm jocul nou
+    const { data: game, error } = await supabase
+      .from('games')
+      .insert({
+        host_id: user.id,
+        quiz_id: quizId,
+        tournament_id: tournamentId,
+        is_finished: false,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    revalidatePath('/games')
+    return { success: true, gameId: game.id }
+  } catch (error) {
+    console.error('Error creating game:', error)
+    return { error: error instanceof Error ? error.message : 'An error occurred' }
+  }
 } 
