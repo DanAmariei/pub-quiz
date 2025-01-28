@@ -36,67 +36,76 @@ export default function GameHost({
 }) {
   const [game, setGame] = useState(initialGame)
   const supabase = createClient()
+
+  // Procesăm întrebările pentru a fi mai ușor de folosit
+  const questions = game?.quiz?.questions?.map(q => q.question) || []
+  const activeQuestionIndex = questions.findIndex(q => q.id === game.active_question_id)
   
-  // Ascultăm pentru modificări în joc
   useEffect(() => {
     const channel = supabase
-      .channel('game_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
+      .channel(`game_${game.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
           table: 'games',
           filter: `id=eq.${game.id}`
-        }, 
+        },
         async (payload) => {
-          // Reîncărcăm datele jocului
-          const { data } = await supabase
-            .from('games')
-            .select(`
-              id,
-              host_id,
-              quiz_id,
-              active_question_id,
-              is_finished,
-              created_at,
-              quiz:quizzes(
+          console.log('Game updated:', payload)
+          
+          if (payload.eventType === 'UPDATE') {
+            const { data: updatedGame } = await supabase
+              .from('games')
+              .select(`
                 id,
-                title,
-                questions:quiz_questions(
-                  question:questions(
-                    id,
-                    question,
-                    correct_answer,
-                    incorrect_answers
+                host_id,
+                quiz_id,
+                active_question_id,
+                is_finished,
+                created_at,
+                quiz:quizzes(
+                  id,
+                  title,
+                  questions:quiz_questions(
+                    question:questions(
+                      id,
+                      question,
+                      correct_answer,
+                      incorrect_answers
+                    )
                   )
                 )
-              )
-            `)
-            .eq('id', game.id)
-            .single()
+              `)
+              .eq('id', game.id)
+              .single()
 
-          if (data) {
-            setGame(data)
+            if (updatedGame) {
+              console.log('Setting updated game:', updatedGame)
+              setGame(updatedGame)
+            }
           }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Subscription status:', status)
+      })
 
     return () => {
+      console.log('Cleaning up subscription')
       supabase.removeChannel(channel)
     }
   }, [game.id])
 
-  // Găsim indexul întrebării active
-  const questions = game.quiz.questions.map(q => q.question)
-  const activeQuestionIndex = questions.findIndex(q => q.id === game.active_question_id)
-  
   async function handleNextQuestion() {
+    if (!questions.length) return
+
     const nextIndex = activeQuestionIndex + 1
     
     if (nextIndex >= questions.length) {
       // Terminăm jocul
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('games')
         .update({ 
           is_finished: true,
@@ -104,28 +113,78 @@ export default function GameHost({
           updated_at: new Date().toISOString()
         })
         .eq('id', game.id)
+        .select(`
+          id,
+          host_id,
+          quiz_id,
+          active_question_id,
+          is_finished,
+          created_at,
+          quiz:quizzes(
+            id,
+            title,
+            questions:quiz_questions(
+              question:questions(
+                id,
+                question,
+                correct_answer,
+                incorrect_answers
+              )
+            )
+          )
+        `)
+        .single()
 
       if (error) {
         toast.error("Eroare la finalizarea jocului")
         return
       }
 
+      setGame(data)
       toast.success("Joc finalizat!")
       return
     }
 
     // Actualizăm întrebarea activă
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from('games')
       .update({ 
         active_question_id: questions[nextIndex].id,
         updated_at: new Date().toISOString()
       })
       .eq('id', game.id)
+      .select(`
+        id,
+        host_id,
+        quiz_id,
+        active_question_id,
+        is_finished,
+        created_at,
+        quiz:quizzes(
+          id,
+          title,
+          questions:quiz_questions(
+            question:questions(
+              id,
+              question,
+              correct_answer,
+              incorrect_answers
+            )
+          )
+        )
+      `)
+      .single()
 
     if (error) {
       toast.error("Eroare la schimbarea întrebării")
+      return
     }
+
+    setGame(data)
+  }
+
+  if (!game?.quiz) {
+    return <div>Loading...</div>
   }
 
   return (
@@ -145,7 +204,7 @@ export default function GameHost({
           )}
         </div>
 
-        {game.active_question_id && (
+        {game.active_question_id && questions[activeQuestionIndex] && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">
               Întrebarea {activeQuestionIndex + 1}

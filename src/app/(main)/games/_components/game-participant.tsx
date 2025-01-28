@@ -45,7 +45,7 @@ export default function GameParticipant({
   const supabase = createClient()
 
   // Găsim întrebarea activă
-  const questions = game.quiz.questions.map(q => q.question)
+  const questions = game?.quiz?.questions?.map(q => q.question) || []
   const activeQuestion = questions.find(q => q.id === game.active_question_id)
   const activeQuestionIndex = questions.findIndex(q => q.id === game.active_question_id)
 
@@ -57,58 +57,96 @@ export default function GameParticipant({
         ...activeQuestion.incorrect_answers
       ].sort(() => Math.random() - 0.5)
       setShuffledAnswers(answers)
+      setSelectedAnswer('')
+      setHasAnswered(false)
     }
   }, [activeQuestion?.id])
 
+  // Funcție pentru a reîncărca datele jocului
+  const reloadGameData = async () => {
+    const { data: updatedGame, error } = await supabase
+      .from('games')
+      .select(`
+        id,
+        host_id,
+        quiz_id,
+        active_question_id,
+        is_finished,
+        created_at,
+        quiz:quizzes(
+          id,
+          title,
+          questions:quiz_questions(
+            question:questions(
+              id,
+              question,
+              correct_answer,
+              incorrect_answers
+            )
+          )
+        )
+      `)
+      .eq('id', game.id)
+      .single()
+
+    if (error) {
+      console.error('Error reloading game data:', error)
+      return
+    }
+
+    console.log('Game data reloaded:', updatedGame)
+    setGame(updatedGame)
+  }
+
   // Ascultăm pentru modificări în joc
   useEffect(() => {
-    const channel = supabase
-      .channel('game_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'games',
-          filter: `id=eq.${game.id}`
-        }, 
-        async (payload) => {
-          // Reîncărcăm datele jocului
-          const { data } = await supabase
-            .from('games')
-            .select(`
-              id,
-              host_id,
-              quiz_id,
-              active_question_id,
-              is_finished,
-              created_at,
-              quiz:quizzes(
-                id,
-                title,
-                questions:quiz_questions(
-                  question:questions(
-                    id,
-                    question,
-                    correct_answer,
-                    incorrect_answers
-                  )
-                )
-              )
-            `)
-            .eq('id', game.id)
-            .single()
+    const channelId = `game_${game.id}`
+    console.log('Setting up realtime subscription on channel:', channelId)
 
-          if (data) {
-            setGame(data)
-            // Resetăm starea răspunsului când se schimbă întrebarea
-            setSelectedAnswer('')
-            setHasAnswered(false)
+    const channel = supabase
+      .channel(channelId)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Ascultăm toate evenimentele pentru debugging
+          schema: 'public',
+          table: 'games',
+          // filter: `id=eq.${game.id}`
+        },
+        (payload) => {
+          console.log('Received payload:', payload)
+          
+          if (payload.eventType === 'UPDATE') {
+            console.log('Game update received:', {
+              old: payload.old,
+              new: payload.new
+            })
+            
+            // Reîncărcăm datele când se schimbă active_question_id sau is_finished
+            if (payload.new.active_question_id !== payload.old.active_question_id ||
+                payload.new.is_finished !== payload.old.is_finished) {
+              console.log('Relevant changes detected, reloading game data')
+              reloadGameData()
+            }
           }
         }
       )
-      .subscribe()
+
+    // Adăugăm handler pentru status changes
+    channel.subscribe((status) => {
+      console.log(`Subscription status for ${channelId}:`, status)
+      
+      if (status === 'SUBSCRIBED') {
+        console.log('Successfully subscribed to game updates')
+      } else if (status === 'CLOSED') {
+        console.log('Subscription closed')
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('Error in subscription channel')
+      }
+    })
 
     return () => {
+      console.log('Cleaning up subscription for channel:', channelId)
       supabase.removeChannel(channel)
     }
   }, [game.id])
@@ -127,7 +165,7 @@ export default function GameParticipant({
     }
 
     toast.success("Te-ai alăturat jocului!")
-    window.location.reload() // Reîncărcăm pagina pentru a actualiza starea
+    window.location.reload()
   }
 
   async function handleSubmitAnswer() {
@@ -150,6 +188,10 @@ export default function GameParticipant({
 
     setHasAnswered(true)
     toast.success("Răspuns trimis cu succes!")
+  }
+
+  if (!game?.quiz) {
+    return <div>Loading...</div>
   }
 
   if (!isParticipant) {
