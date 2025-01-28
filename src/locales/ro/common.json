@@ -1,0 +1,18 @@
+{
+  "welcome": "Bine ați venit la Quiz Game",
+  "subtitle": "Testează-ți cunoștințele și distrează-te!",
+  "host_quiz": "Host Quiz",
+  "active_sessions": "Sesiuni Active",
+  "view_all": "Vezi toate",
+  "no_sessions": "Nu există sesiuni active momentan",
+  "difficulty": {
+    "easy": "Ușor",
+    "medium": "Mediu",
+    "hard": "Dificil"
+  },
+  "status": {
+    "waiting": "În așteptare",
+    "active": "În desfășurare",
+    "completed": "Finalizat"
+  }
+} 

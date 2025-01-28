@@ -1,0 +1,18 @@
+{
+  "welcome": "Welcome to Quiz Game",
+  "subtitle": "Test your knowledge and have fun!",
+  "host_quiz": "Host Quiz",
+  "active_sessions": "Active Sessions",
+  "view_all": "View all",
+  "no_sessions": "No active sessions at the moment",
+  "difficulty": {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard"
+  },
+  "status": {
+    "waiting": "Waiting",
+    "active": "In Progress",
+    "completed": "Completed"
+  }
+} 
