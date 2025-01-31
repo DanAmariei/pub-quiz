@@ -63,8 +63,7 @@ export async function createQuiz(formData: FormData) {
     const questionsData = JSON.parse(questionsJson) as QuestionsData
 
     // 3. Inserăm fiecare întrebare și creăm relația cu quiz-ul
-    for (const q of questionsData.questions) {
-      // Inserăm întrebarea
+    for (const [index, q] of questionsData.questions.entries()) {
       const { data: question, error: questionError } = await supabase
         .from('questions')
         .insert({
@@ -75,7 +74,8 @@ export async function createQuiz(formData: FormData) {
           video: q.video || null,
           correct_answer: q.correct_answer,
           incorrect_answers: q.incorrect_answers,
-          difficulty
+          difficulty,
+          order: index
         })
         .select()
         .single()

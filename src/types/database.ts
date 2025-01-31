@@ -27,16 +27,16 @@ export interface Quiz {
   title: string
   category: string
   difficulty: 'easy' | 'medium' | 'hard'
-  questions: {
-    questions: Array<{
-      question: string
-      song?: string
-      image?: string
-      video?: string
-      correct_answer: string
-      incorrect_answers: string[]
-    }>
-  }
+  questions: Array<{
+    id: string
+    question: string
+    song?: string
+    image?: string
+    video?: string
+    correct_answer: string
+    incorrect_answers: string[]
+    order: number;
+  }>
   created_by: string
 }
 
@@ -61,4 +61,44 @@ export interface Tournament {
       difficulty: 'easy' | 'medium' | 'hard'
     }
   }>
+}
+
+export interface Question {
+  id: string
+  question: string
+  correct_answer: string
+  incorrect_answers: string[]
+  order: number;
+}
+
+export interface Game {
+  id: string;
+  host_id: string;
+  quiz_id: string;
+  active_question_id: string | null;
+  is_finished: boolean;
+  created_at: string;
+  quiz: {
+    id: string;
+    title: string;
+    questions: Array<{
+      question: Question;
+    }>;
+  };
+}
+
+export interface Ranking {
+  participant_id: string;
+  points: number;
+  rank: number;
+  profiles: {
+    username: string;
+    avatar_url: string | null;
+  };
+}
+
+export interface QuizQuestion {
+  quiz_id: string;
+  question_id: string;
+  order: number;
 } 

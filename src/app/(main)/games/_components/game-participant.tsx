@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
+import { Ranking } from "@/types/database"
+import GameRankings from "./game-rankings"
 
 interface Question {
   id: string
@@ -18,37 +20,44 @@ interface Question {
 interface Game {
   id: string
   host_id: string
+  quiz_id: string
+  active_question_id: string | null
+  is_finished: boolean
   quiz: {
     id: string
     title: string
     questions: Array<{
-      question: Question
+      question: {
+        id: string
+        question: string
+        correct_answer: string
+        incorrect_answers: string[]
+      }
     }>
   }
-  active_question_id: string | null
-  is_finished: boolean
 }
 
 export default function GameParticipant({ 
   game: initialGame,
   user,
-  isParticipant
+  isParticipant: initialIsParticipant
 }: { 
   game: Game
-  user: { id: string }
+  user: any
   isParticipant: boolean
 }) {
   const [game, setGame] = useState(initialGame)
+  const [isParticipant, setIsParticipant] = useState(initialIsParticipant)
   const [selectedAnswer, setSelectedAnswer] = useState<string>('')
   const [hasAnswered, setHasAnswered] = useState(false)
   const [shuffledAnswers, setShuffledAnswers] = useState<string[]>([])
-  const [rankings, setRankings] = useState([])
+  const [rankings, setRankings] = useState<Ranking[]>([])
   const supabase = createClient()
 
-  // Găsim întrebarea activă
-  const questions = game?.quiz?.questions?.map(q => q.question) || []
-  const activeQuestion = questions.find(q => q.id === game.active_question_id)
-  const activeQuestionIndex = questions.findIndex(q => q.id === game.active_question_id)
+  // Găsim întrebarea activă și o definim o singură dată
+  const activeQuestion = game.quiz.questions.find(
+    q => q.question.id === game.active_question_id
+  )?.question
 
   // Amestecăm răspunsurile când se schimbă întrebarea activă
   useEffect(() => {
@@ -127,42 +136,73 @@ export default function GameParticipant({
 
   // Ascultăm pentru modificări în joc
   useEffect(() => {
-    const channelId = `game_${game.id}`
-    console.log('Setting up realtime subscription on channel:', channelId)
-
     const channel = supabase
-      .channel(channelId)
+      .channel(`game_${game.id}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'games',
+          filter: `id=eq.${game.id}`
         },
-        (payload) => {
-          console.log('Received payload:', payload)
-          
+        async (payload) => {
           if (payload.eventType === 'UPDATE') {
-            console.log('Game update received:', {
-              old: payload.old,
-              new: payload.new
-            })
-            
-            if (payload.new.active_question_id !== payload.old.active_question_id ||
-                payload.new.is_finished !== payload.old.is_finished) {
-              console.log('Relevant changes detected, reloading game data')
-              reloadGameData()
+            // Actualizăm starea jocului când se modifică
+            const { data: updatedGame } = await supabase
+              .from('games')
+              .select(`
+                id,
+                host_id,
+                quiz_id,
+                active_question_id,
+                is_finished,
+                quiz:quizzes(
+                  id,
+                  title,
+                  questions:quiz_questions(
+                    question:questions(
+                      id,
+                      question,
+                      correct_answer,
+                      incorrect_answers
+                    )
+                  )
+                )
+              `)
+              .eq('id', game.id)
+              .single()
+
+            if (updatedGame) {
+              setGame(updatedGame)
             }
           }
         }
       )
       .subscribe()
 
+    // Subscrie la modificări în tabelul game_participants pentru acest participant
+    const participantChannel = supabase
+      .channel(`participant_${game.id}_${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'game_participants',
+          filter: `game_id=eq.${game.id} AND participant_id=eq.${user.id}`
+        },
+        () => {
+          setIsParticipant(true)
+        }
+      )
+      .subscribe()
+
     return () => {
-      console.log('Cleaning up subscription for channel:', channelId)
       supabase.removeChannel(channel)
+      supabase.removeChannel(participantChannel)
     }
-  }, [game.id])
+  }, [game.id, user.id])
 
   // Verificăm dacă jocul este finalizat la montare
   useEffect(() => {
@@ -171,7 +211,7 @@ export default function GameParticipant({
     }
   }, [game.is_finished])
 
-  async function handleJoinGame() {
+  const handleJoin = async () => {
     const { error } = await supabase
       .from('game_participants')
       .insert({
@@ -180,12 +220,13 @@ export default function GameParticipant({
       })
 
     if (error) {
-      toast.error("Eroare la înscrierea în joc")
+      toast.error("Nu am putut să te alătur jocului")
       return
     }
 
-    toast.success("Te-ai alăturat jocului!")
-    reloadGameData()
+    // Actualizăm starea imediat după ce ne-am alăturat cu succes
+    setIsParticipant(true)
+    toast.success("Te-ai alăturat jocului cu succes!")
   }
 
   async function handleSubmitAnswer() {
@@ -214,91 +255,90 @@ export default function GameParticipant({
     return <div>Loading...</div>
   }
 
-  if (!isParticipant) {
+  if (game.is_finished) {
     return (
       <div className="container py-8">
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4">{game.quiz.title}</h1>
-          <p className="text-muted-foreground mb-8">
-            Alătură-te acestui joc pentru a participa
-          </p>
-          <Button onClick={handleJoinGame}>
-            Alătură-te Jocului
-          </Button>
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-bold">{game.quiz.title}</h1>
+            <p className="text-muted-foreground">Jocul s-a încheiat</p>
+          </div>
+
+          <GameRankings 
+            rankings={rankings}
+            title="Clasament Final"
+          />
         </div>
       </div>
     )
   }
 
+  if (!isParticipant) {
+    return (
+      <div className="container py-8">
+        <div className="max-w-2xl mx-auto text-center space-y-4">
+          <h1 className="text-2xl font-bold">{game.quiz.title}</h1>
+          <div className="space-y-4">
+            <Button onClick={handleJoin}>
+              Alătură-te Jocului
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!game.active_question_id) {
+    return (
+      <div className="container py-8">
+        <div className="max-w-2xl mx-auto text-center space-y-4">
+          <h1 className="text-2xl font-bold">{game.quiz.title}</h1>
+          <Card className="p-6">
+            <div className="space-y-4 text-center">
+              <p className="text-muted-foreground">
+                Te-ai alăturat cu succes!
+              </p>
+              <p className="text-muted-foreground">
+                Așteptăm ca gazda să înceapă jocul...
+              </p>
+            </div>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (!activeQuestion) return null
+
   return (
     <div className="container py-8">
-      <div className="flex flex-col gap-8 max-w-2xl mx-auto">
-        <div>
-          <h1 className="text-2xl font-bold">{game.quiz.title}</h1>
-        </div>
+      <div className="max-w-2xl mx-auto">
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">
+            {activeQuestion?.question}
+          </h2>
 
-        {activeQuestion ? (
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">
-              Întrebarea {activeQuestionIndex + 1}
-            </h2>
-            <p className="mb-6">{activeQuestion.question}</p>
+          <RadioGroup
+            value={selectedAnswer}
+            onValueChange={setSelectedAnswer}
+            className="space-y-3"
+          >
+            {shuffledAnswers.map((answer) => (
+              <div key={answer} className="flex items-center space-x-2">
+                <RadioGroupItem value={answer} id={answer} />
+                <Label htmlFor={answer}>{answer}</Label>
+              </div>
+            ))}
+          </RadioGroup>
 
-            <RadioGroup
-              value={selectedAnswer}
-              onValueChange={setSelectedAnswer}
-              className="space-y-4"
-              disabled={hasAnswered}
-            >
-              {shuffledAnswers.map((answer) => (
-                <div key={answer} className="flex items-center space-x-2">
-                  <RadioGroupItem value={answer} id={answer} />
-                  <Label htmlFor={answer}>{answer}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-
-            <Button 
-              onClick={handleSubmitAnswer}
-              disabled={!selectedAnswer || hasAnswered}
-              className="mt-6"
-            >
-              Trimite Răspunsul
-            </Button>
-          </Card>
-        ) : game.is_finished ? (
-          <div className="text-center py-8">
-            <h2 className="text-xl font-semibold">Joc Finalizat!</h2>
-            <p className="text-muted-foreground">
-              Verifică clasamentul pentru rezultate.
-            </p>
-            <div className="mt-4">
-              {rankings.length > 0 ? (
-                <ul>
-                  {rankings.map((ranking) => (
-                    <li key={ranking.participant_id} className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        {ranking.profiles.avatar_url && (
-                          <img src={ranking.profiles.avatar_url} alt={ranking.profiles.username} className="w-8 h-8 rounded-full mr-2" />
-                        )}
-                        <span>{ranking.profiles.username}</span>
-                      </div>
-                      <span>{ranking.points} puncte</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>Nu există clasamente disponibile.</p>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">
-              Așteptăm începerea jocului...
-            </p>
-          </div>
-        )}
+          <Button
+            onClick={handleSubmitAnswer}
+            disabled={!selectedAnswer || hasAnswered}
+            className="mt-4"
+          >
+            Trimite Răspunsul
+          </Button>
+        </Card>
       </div>
     </div>
   )

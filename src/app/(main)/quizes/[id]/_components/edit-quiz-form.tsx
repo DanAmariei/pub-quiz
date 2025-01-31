@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card"
 import { Pencil, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { createClient } from "@/utils/supabase/client"
 
 interface Category {
   id: string
@@ -50,6 +51,7 @@ export default function EditQuizForm({
 }) {
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null)
   const [questions, setQuestions] = useState(quiz.questions)
+  const supabase = createClient()
 
   const handleQuestionUpdate = (questionId: string, updates: Partial<Question>) => {
     setQuestions(prevQuestions => 
@@ -61,15 +63,30 @@ export default function EditQuizForm({
     )
   }
 
+  const moveQuestion = (index: number, direction: 'up' | 'down') => {
+    if (
+      (direction === 'up' && index === 0) || 
+      (direction === 'down' && index === questions.length - 1)
+    ) return;
+
+    const newQuestions = [...questions];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    // Swap questions
+    [newQuestions[index], newQuestions[targetIndex]] = [newQuestions[targetIndex], newQuestions[index]];
+    
+    setQuestions(newQuestions);
+  };
+
   return (
     <form 
       action={async (formData) => {
-        questions.forEach(({ question }) => {
-          console.log('Question ID:', question.id)
+        questions.forEach(({ question }, index) => {
+          formData.append(`order-${question.id}`, index.toString())
           formData.append(`question-${question.id}`, question.question)
           formData.append(`correct-${question.id}`, question.correct_answer)
-          question.incorrect_answers.forEach((answer, index) => {
-            formData.append(`incorrect-${question.id}-${index}`, answer)
+          question.incorrect_answers.forEach((answer, i) => {
+            formData.append(`incorrect-${question.id}-${i}`, answer)
           })
           formData.append(`difficulty-${question.id}`, question.difficulty)
         })
@@ -207,6 +224,24 @@ export default function EditQuizForm({
                     </p>
                   </div>
                   <div className="flex gap-2">
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => moveQuestion(index, 'up')}
+                      disabled={index === 0}
+                    >
+                      ↑
+                    </Button>
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => moveQuestion(index, 'down')}
+                      disabled={index === questions.length - 1}
+                    >
+                      ↓
+                    </Button>
                     <Button 
                       type="button" 
                       variant="ghost" 

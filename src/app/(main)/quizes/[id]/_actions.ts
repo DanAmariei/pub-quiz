@@ -44,32 +44,37 @@ export async function updateQuiz(id: string, formData: FormData) {
 
     // Grupăm toate datele pentru fiecare întrebare
     for (const [key, value] of entries) {
-      if (key.startsWith('question-')) {
-        const questionId = key.substring('question-'.length)
+      // Extragem ID-ul întrebării din cheie (ex: "question-0c5e3584-1234-5678-90ab-cd1234567890")
+      const questionId = key.split('-').slice(1).join('-'); // Aceasta va păstra UUID-ul complet
+      
+      if (key.startsWith('question-') && questionId) {
         if (!questionUpdates.has(questionId)) {
           questionUpdates.set(questionId, {})
         }
         questionUpdates.get(questionId).question = value
       }
-      else if (key.startsWith('correct-')) {
-        const questionId = key.substring('correct-'.length)
+      else if (key.startsWith('correct-') && questionId) {
         if (!questionUpdates.has(questionId)) {
           questionUpdates.set(questionId, {})
         }
         questionUpdates.get(questionId).correct_answer = value
       }
-      else if (key.startsWith('incorrect-')) {
-        const [_, questionId] = key.split('-')
+      else if (key.startsWith('incorrect-') && questionId) {
         if (!questionUpdates.has(questionId)) {
           questionUpdates.set(questionId, {})
         }
       }
-      else if (key.startsWith('difficulty-')) {
-        const questionId = key.substring('difficulty-'.length)
+      else if (key.startsWith('difficulty-') && questionId) {
         if (!questionUpdates.has(questionId)) {
           questionUpdates.set(questionId, {})
         }
         questionUpdates.get(questionId).difficulty = value
+      }
+      else if (key.startsWith('order-') && questionId) {
+        if (!questionUpdates.has(questionId)) {
+          questionUpdates.set(questionId, {})
+        }
+        questionUpdates.get(questionId).order = parseInt(value as string)
       }
     }
 
@@ -86,18 +91,36 @@ export async function updateQuiz(id: string, formData: FormData) {
       }
     }
 
-    // Actualizăm fiecare întrebare
+    // Actualizăm întrebările și ordinea lor
     for (const [questionId, updates] of questionUpdates) {
-      console.log('Updating question:', questionId, updates)
+      // Actualizăm textul întrebării în tabelul questions
+      if (updates.question) {
+        const { error: updateError } = await supabase
+          .from('questions')
+          .update({
+            question: updates.question,
+            correct_answer: updates.correct_answer,
+            incorrect_answers: updates.incorrect_answers,
+            difficulty: updates.difficulty
+          })
+          .eq('id', questionId)
 
-      const { error: updateError } = await supabase
-        .from('questions')
-        .update(updates)
-        .eq('id', questionId)
+        if (updateError) {
+          throw new Error(`Error updating question: ${updateError.message}`)
+        }
+      }
 
-      if (updateError) {
-        console.error('Update error:', updateError)
-        throw new Error(`Error updating question: ${updateError.message}`)
+      // Actualizăm ordinea în tabelul quiz_questions
+      if (typeof updates.order === 'number') {
+        const { error: orderError } = await supabase
+          .from('quiz_questions')
+          .update({ order: updates.order })
+          .eq('quiz_id', id)
+          .eq('question_id', questionId)
+
+        if (orderError) {
+          throw new Error(`Error updating question order: ${orderError.message}`)
+        }
       }
     }
 

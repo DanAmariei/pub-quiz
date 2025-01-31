@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
+import GameRankings from "./game-rankings"
 
 interface Question {
   id: string
@@ -250,25 +251,10 @@ export default function GameHost({
             <p className="text-muted-foreground">
               Verifică clasamentul pentru rezultate.
             </p>
-            <div className="mt-4">
-              {rankings.length > 0 ? (
-                <ul>
-                  {rankings.map((ranking) => (
-                    <li key={ranking.participant_id} className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        {ranking.profiles.avatar_url && (
-                          <img src={ranking.profiles.avatar_url} alt={ranking.profiles.username} className="w-8 h-8 rounded-full mr-2" />
-                        )}
-                        <span>{ranking.profiles.username}</span>
-                      </div>
-                      <span>{ranking.points} puncte</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>Nu există clasamente disponibile.</p>
-              )}
-            </div>
+            <GameRankings 
+              rankings={rankings}
+              className="mt-6"
+            />
           </div>
         )}
       </div>
