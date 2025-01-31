@@ -21,7 +21,7 @@ import { useState } from "react"
 import { PlayCircle } from "lucide-react"
 import type { Quiz } from "@/types/database"
 import { toast } from "sonner"
-import { startQuizGame } from "../_actions"
+import { createGame } from "../_actions"
 import { useRouter } from "next/navigation"
 
 interface HostQuizFormProps {
@@ -36,24 +36,11 @@ export default function HostQuizForm({ quizes, tournaments }: HostQuizFormProps)
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
-  async function handleSubmit(formData: FormData) {
-    const result = await startQuizGame(formData)
-    
-    if (result.error) {
-      toast.error(result.error)
-      return
-    }
-
-    toast.success("Jocul a fost creat cu succes!")
-    setOpen(false)
-    router.push(`/games/${result.gameId}`)
-  }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="w-full gap-2">
-          <PlayCircle className="w-5 h-5" />
+        <Button>
+          <PlayCircle className="mr-2 h-4 w-4" />
           Host Quiz
         </Button>
       </DialogTrigger>
@@ -61,8 +48,18 @@ export default function HostQuizForm({ quizes, tournaments }: HostQuizFormProps)
         <DialogHeader>
           <DialogTitle>Creează Joc Nou</DialogTitle>
         </DialogHeader>
-
-        <form action={handleSubmit} className="space-y-4">
+        <form 
+          action={async (formData) => {
+            const result = await createGame(formData)
+            if (result.error) {
+              toast.error(result.error)
+              return
+            }
+            setOpen(false)
+            router.push(`/games/${result.gameId}`)
+          }}
+          className="space-y-4 pt-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="name">Nume Joc</Label>
             <Input

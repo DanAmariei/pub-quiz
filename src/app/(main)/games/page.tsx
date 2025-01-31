@@ -13,6 +13,7 @@ interface Game {
   id: string
   created_at: string
   is_finished: boolean
+  title: string
   host: {
     username: string
   }
@@ -35,6 +36,7 @@ export default function GamesPage() {
           id,
           created_at,
           is_finished,
+          title,
           host:profiles!games_host_id_fkey(username),
           quiz:quizzes(
             title,
@@ -72,6 +74,7 @@ export default function GamesPage() {
                 id,
                 created_at,
                 is_finished,
+                title,
                 host:profiles!games_host_id_fkey(username),
                 quiz:quizzes(
                   title,
@@ -116,7 +119,14 @@ export default function GamesPage() {
           <Link key={game.id} href={`/games/${game.id}`}>
             <Card className="p-4 hover:bg-accent transition-colors cursor-pointer">
               <div className="flex justify-between items-start mb-2">
-                <h2 className="font-semibold">{game.quiz.title}</h2>
+                <div>
+                  <h2 className="font-semibold">{game.title || game.quiz.title}</h2>
+                  {game.title && (
+                    <p className="text-sm text-muted-foreground">
+                      Quiz: {game.quiz.title}
+                    </p>
+                  )}
+                </div>
                 <Badge>
                   Gazdă: {game.host.username}
                 </Badge>
