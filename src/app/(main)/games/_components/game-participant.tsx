@@ -307,15 +307,15 @@ export default function GameParticipant({
 
   if (game.is_finished) {
     return (
-      <div className="container py-8">
-        <div className="max-w-2xl mx-auto space-y-6">
+      <div className="">
+        <div className="flex flex-col gap-6 sm:gap-8 max-w-2xl mx-auto">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold">{game.quiz.title}</h1>
             <p className="text-muted-foreground">Jocul s-a încheiat</p>
           </div>
 
           <GameRankings 
-            rankings={rankings}
+            gameId={game.id}
             title="Clasament Final"
           />
         </div>
@@ -325,8 +325,8 @@ export default function GameParticipant({
 
   if (!isParticipant) {
     return (
-      <div className="container py-8">
-        <div className="max-w-2xl mx-auto text-center space-y-4">
+      <div className="">
+        <div className="flex flex-col gap-6 sm:gap-8 max-w-2xl mx-auto text-center space-y-4">
           <h1 className="text-2xl font-bold">{game.quiz.title}</h1>
           <div className="space-y-4">
             <Button onClick={handleJoin}>
@@ -340,8 +340,8 @@ export default function GameParticipant({
 
   if (!game.active_question_id) {
     return (
-      <div className="container py-8">
-        <div className="max-w-2xl mx-auto text-center space-y-4">
+      <div className="">
+        <div className="flex flex-col gap-6 sm:gap-8 max-w-2xl mx-auto text-center space-y-4">
           <h1 className="text-2xl font-bold">{game.quiz.title}</h1>
           <Card className="p-6">
             <div className="space-y-4 text-center">
@@ -361,8 +361,8 @@ export default function GameParticipant({
   if (!activeQuestion) return null
 
   return (
-    <div className="container py-8">
-      <div className="flex flex-col gap-8 max-w-2xl mx-auto">
+    <div className="">
+      <div className="flex flex-col gap-6 sm:gap-8 max-w-2xl mx-auto">
         <GameHeader
           gameId={game.id}
           quizTitle={game.quiz.title}
@@ -395,7 +395,7 @@ export default function GameParticipant({
 
         {game.is_finished && (
           <GameRankings 
-            rankings={rankings}
+            gameId={game.id}
             title="Clasament Final"
           />
         )}

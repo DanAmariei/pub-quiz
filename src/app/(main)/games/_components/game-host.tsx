@@ -291,8 +291,8 @@ export default function GameHost({
   }
 
   return (
-    <div className="container py-8">
-      <div className="flex flex-col gap-8 max-w-2xl mx-auto">
+    <div className="">
+      <div className="flex flex-col gap-6 sm:gap-8 max-w-2xl mx-auto">
         <GameHeader
           gameId={game.id}
           quizTitle={game.quiz.title}
@@ -326,9 +326,9 @@ export default function GameHost({
               Clasamentul și răspunsurile corecte:
             </p>
             <GameRankings 
-              rankings={rankings}
+              gameId={game.id}
               className="mt-6"
-              isFinished={game.is_finished}
+              title="Clasament Final"
             />
           </div>
         )}
