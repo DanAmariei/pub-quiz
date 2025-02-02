@@ -11,6 +11,7 @@ import { Ranking } from "@/types/database"
 import GameRankings from "./game-rankings"
 import QuestionDisplay from "./question-display"
 import GameHeader from "./game-header"
+import GameAnswers from "./game-answers"
 
 interface Question {
   id: string
@@ -318,6 +319,11 @@ export default function GameParticipant({
             gameId={game.id}
             title="Clasament Final"
           />
+          <GameAnswers
+            gameId={game.id}
+            userId={user.id}
+            className="mt-6"
+          />
         </div>
       </div>
     )
@@ -375,6 +381,7 @@ export default function GameParticipant({
         {activeQuestion && (
           <QuestionDisplay
             questionNumber={activeQuestionIndex + 1}
+            totalQuestions={game.quiz.questions.length}
             question={activeQuestion.question}
             answers={shuffledAnswers}
             selectedAnswer={selectedAnswer}
@@ -394,10 +401,17 @@ export default function GameParticipant({
         )}
 
         {game.is_finished && (
-          <GameRankings 
-            gameId={game.id}
-            title="Clasament Final"
-          />
+          <>
+            <GameRankings 
+              gameId={game.id}
+              title="Clasament Final"
+            />
+            <GameAnswers
+              gameId={game.id}
+              userId={user.id}
+              className="mt-6"
+            />
+          </>
         )}
       </div>
     </div>

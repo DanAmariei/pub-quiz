@@ -1,10 +1,12 @@
 'use client'
 
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 interface QuestionDisplayProps {
   questionNumber?: number
+  totalQuestions?: number
   question: string
   answers: string[]
   selectedAnswer?: string
@@ -17,6 +19,7 @@ const ANSWER_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
 
 export default function QuestionDisplay({
   questionNumber,
+  totalQuestions,
   question,
   answers,
   selectedAnswer,
@@ -25,7 +28,15 @@ export default function QuestionDisplay({
 }: QuestionDisplayProps) {
   return (
     <div className="space-y-4">
-      <Card className="p-6">
+      <Card className="p-6 relative">
+        {questionNumber && totalQuestions && (
+          <Badge 
+            variant="secondary" 
+            className="absolute top-4 right-4"
+          >
+            {questionNumber}/{totalQuestions}
+          </Badge>
+        )}
         <h2 className="text-xl font-semibold mb-4">
           {questionNumber ? `Întrebarea ${questionNumber}` : 'Întrebare'}
         </h2>

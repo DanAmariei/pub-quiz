@@ -9,6 +9,7 @@ import GameRankings from "./game-rankings"
 import { cn } from "@/lib/utils"
 import QuestionDisplay from "./question-display"
 import GameHeader from "./game-header"
+import GameAnswers from "./game-answers"
 
 interface Question {
   id: string
@@ -313,6 +314,7 @@ export default function GameHost({
         {game.active_question_id && questions[activeQuestionIndex] && (
           <QuestionDisplay
             questionNumber={activeQuestionIndex + 1}
+            totalQuestions={questions.length}
             question={questions[activeQuestionIndex].question}
             answers={allAnswers}
             isInteractive={false}
@@ -329,6 +331,12 @@ export default function GameHost({
               gameId={game.id}
               className="mt-6"
               title="Clasament Final"
+            />
+            <GameAnswers
+              gameId={game.id}
+              userId={user.id}
+              className="mt-6"
+              isHost={true}
             />
           </div>
         )}

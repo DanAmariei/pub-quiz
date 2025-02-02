@@ -42,14 +42,6 @@ export default function GameHeader({
             <ParticipantAvatars participants={participants} />
           )}
         </div>
-
-        {currentQuestionNumber !== undefined && !isFinished && (
-          <Card className="px-4 py-2">
-            <p className="text-sm font-medium">
-              Întrebarea {currentQuestionNumber}/{totalQuestions}
-            </p>
-          </Card>
-        )}
       </div>
     </div>
   )
