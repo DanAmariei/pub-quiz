@@ -68,9 +68,9 @@ export default async function HomePage() {
 
         <div className="w-full max-w-2xl">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">Sesiuni Active</h2>
+            <h2 className="text-2xl font-semibold">Jocuri Active</h2>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/sessions" className="flex items-center gap-2">
+              <Link href="/games" className="flex items-center gap-2">
                 Vezi toate
                 <ArrowRight className="w-4 h-4" />
               </Link>

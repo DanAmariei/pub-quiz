@@ -114,10 +114,10 @@ export default function GamesPage() {
         </Link>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-col gap-4 max-w-2xl mx-auto">
         {games.map((game) => (
           <Link key={game.id} href={`/games/${game.id}`}>
-            <Card className="p-4 hover:bg-accent transition-colors cursor-pointer">
+            <Card className="p-4 hover:bg-accent transition-colors cursor-pointer w-full">
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <h2 className="font-semibold">{game.title || game.quiz.title}</h2>
@@ -152,7 +152,7 @@ export default function GamesPage() {
         ))}
 
         {games.length === 0 && (
-          <p className="text-muted-foreground col-span-full text-center py-8">
+          <p className="text-muted-foreground text-center py-8">
             Nu există jocuri active în acest moment.
           </p>
         )}

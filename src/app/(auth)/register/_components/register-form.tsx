@@ -1,82 +1,59 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { InputForm } from "@/components/ui/input/input-form";
-import { createClient } from "@/utils/supabase/client";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { signUp } from "@/app/auth/_actions";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
+import { toast } from "sonner";
 
-export const registerFormSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters.",
-  }),
-});
-
-type RegisterValuesType = z.infer<typeof registerFormSchema>;
-
-const defaultValues: RegisterValuesType = {
-  email: "",
-  password: "",
-};
-
-const RegisterForm = () => {
+export default function RegisterForm() {
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const supabase = createClient();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsLoading(true);
 
-  const form = useForm<RegisterValuesType>({
-    resolver: zodResolver(registerFormSchema),
-    defaultValues,
-  });
+    const formData = new FormData(event.currentTarget);
+    const result = await signUp(formData);
 
-  async function handleRegister(values: RegisterValuesType) {
-    const { error, data } = await supabase.auth.signUp({
-      ...values,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback`,
-      },
-    });
+    if (result?.error) {
+      toast.error(result.error);
+      setIsLoading(false);
+      return;
+    }
 
-    if (error) return toast.error(error.message);
-
-    console.log({ data });
-
-    toast.success("Verification email sent. Check your mail.");
-
-    router.replace("/email-verify");
+    // Redirecționăm direct către homepage
+    router.push("/");
+    router.refresh();
   }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(handleRegister)}
-        className="w-full flex flex-col gap-y-4"
-      >
-        <InputForm
-          label="Email"
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
           name="email"
-          placeholder="hello@sarathadhi.com"
-          description=""
+          type="email"
+          placeholder="nume@exemplu.com"
           required
         />
-
-        <InputForm
-          type="password"
-          label="Password"
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password">Parolă</Label>
+        <Input
+          id="password"
           name="password"
-          description=""
+          type="password"
           required
         />
-
-        <Button>Register</Button>
-      </form>
-    </Form>
+      </div>
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? "Se creează contul..." : "Creează cont"}
+      </Button>
+    </form>
   );
-};
-
-export default RegisterForm;
+}

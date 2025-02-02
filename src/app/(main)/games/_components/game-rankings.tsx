@@ -6,12 +6,14 @@ interface GameRankingsProps {
   rankings: Ranking[]
   title?: string
   className?: string
+  isFinished?: boolean
 }
 
 export default function GameRankings({ 
   rankings,
   title = "Clasament",
-  className = ""
+  className = "",
+  isFinished = false
 }: GameRankingsProps) {
   return (
     <Card className={`p-6 ${className}`}>
@@ -49,7 +51,9 @@ export default function GameRankings({
 
         {rankings.length === 0 && (
           <p className="text-center text-muted-foreground py-4">
-            Se calculează rezultatele...
+            {isFinished 
+              ? "Acest joc nu a avut participanți." 
+              : "Se calculează rezultatele..."}
           </p>
         )}
       </div>

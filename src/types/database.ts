@@ -17,6 +17,18 @@ export interface Database {
         Insert: Omit<Profile, 'created_at' | 'updated_at'>;
         Update: Partial<Omit<Profile, 'id'>>;
       };
+      games: {
+        Row: {
+          id: string;
+          created_at: string;
+          is_finished: boolean;
+          title: string;
+          host_id: string;
+          quiz_id: string;
+        };
+        Insert: Omit<Row, 'id' | 'created_at'>;
+        Update: Partial<Omit<Row, 'id'>>;
+      };
     };
   };
 }

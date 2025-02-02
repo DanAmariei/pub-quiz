@@ -106,4 +106,30 @@ export async function createGame(formData: FormData) {
     console.error('Error:', error)
     return { error: error instanceof Error ? error.message : 'An error occurred' }
   }
+}
+
+export async function deleteGame(gameId: string) {
+  const { user } = await getProfile() || {}
+  if (!user) return { error: 'Unauthorized' }
+
+  const supabase = createClient()
+
+  try {
+    const { error } = await supabase
+      .from('games')
+      .delete()
+      .eq('id', gameId)
+      .eq('host_id', user.id) // Ne asigurăm că doar host-ul poate șterge jocul
+
+    if (error) {
+      throw new Error(`Error deleting game: ${error.message}`)
+    }
+
+    revalidatePath('/my-games')
+    return { success: true }
+    
+  } catch (error) {
+    console.error('Error:', error)
+    return { error: error instanceof Error ? error.message : 'An error occurred' }
+  }
 } 

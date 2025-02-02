@@ -64,6 +64,7 @@ export async function createQuiz(formData: FormData) {
 
     // 3. Inserăm fiecare întrebare și creăm relația cu quiz-ul
     for (const [index, q] of questionsData.questions.entries()) {
+      // Inserăm întrebarea fără order
       const { data: question, error: questionError } = await supabase
         .from('questions')
         .insert({
@@ -74,8 +75,7 @@ export async function createQuiz(formData: FormData) {
           video: q.video || null,
           correct_answer: q.correct_answer,
           incorrect_answers: q.incorrect_answers,
-          difficulty,
-          order: index
+          difficulty
         })
         .select()
         .single()
@@ -84,12 +84,13 @@ export async function createQuiz(formData: FormData) {
         throw new Error(`Error creating question: ${questionError.message}`)
       }
 
-      // Creăm relația între quiz și întrebare
+      // Creăm relația între quiz și întrebare, incluzând order aici
       const { error: relationError } = await supabase
         .from('quiz_questions')
         .insert({
           quiz_id: quiz.id,
-          question_id: question.id
+          question_id: question.id,
+          order: index // Adăugăm order în relație
         })
 
       if (relationError) {

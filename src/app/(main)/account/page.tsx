@@ -7,6 +7,39 @@ import { getProfile } from "@/utils/get-profile";
 import { Pencil } from "lucide-react";
 import EditProfileForm from "./_components/edit-profile-form";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+async function getStats(userId: string) {
+  const supabase = createClient();
+
+  const [hostedGames, participatedGames, hostedTournaments, participatedTournaments] = await Promise.all([
+    supabase
+      .from('games')
+      .select('id', { count: 'exact' })
+      .eq('host_id', userId),
+    supabase
+      .from('game_participants')
+      .select('id', { count: 'exact' })
+      .eq('participant_id', userId),
+    supabase
+      .from('tournaments')
+      .select('id', { count: 'exact' })
+      .eq('host_id', userId),
+    supabase
+      .from('tournament_participants')
+      .select('id', { count: 'exact' })
+      .eq('participant_id', userId)
+  ]);
+
+  return {
+    hostedGames: hostedGames.count || 0,
+    participatedGames: participatedGames.count || 0,
+    hostedTournaments: hostedTournaments.count || 0,
+    participatedTournaments: participatedTournaments.count || 0
+  };
+}
 
 export default async function AccountPage() {
   const { user, profile } = await getProfile() || {};
@@ -23,6 +56,8 @@ export default async function AccountPage() {
       </main>
     );
   }
+
+  const stats = await getStats(user.id);
 
   async function updateProfile(formData: FormData) {
     "use server";
@@ -62,19 +97,12 @@ export default async function AccountPage() {
         <div className="border rounded-lg p-6">
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-start gap-4">
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Avatar utilizator"
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                  <span className="text-2xl font-semibold text-muted-foreground">
-                    {profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
-                  </span>
-                </div>
-              )}
+              <Avatar className="w-16 h-16">
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback>
+                  {profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <div>
                 <h2 className="text-xl font-semibold">Informații Profil</h2>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -126,6 +154,28 @@ export default async function AccountPage() {
                       ? "Host" 
                       : "Utilizator"}
                 </p>
+              </div>
+            </div>
+
+            <div className="border-t pt-6">
+              <h3 className="text-sm font-medium mb-4">Statistici</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    <span className="font-medium text-foreground">{stats.hostedGames}</span> jocuri găzduite
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-medium text-foreground">{stats.participatedGames}</span> jocuri jucate
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    <span className="font-medium text-foreground">{stats.hostedTournaments}</span> turnee găzduite
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-medium text-foreground">{stats.participatedTournaments}</span> turnee jucate
+                  </p>
+                </div>
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
 import GameRankings from "./game-rankings"
+import { cn } from "@/lib/utils"
 
 interface Question {
   id: string
@@ -28,6 +29,16 @@ interface Game {
   is_finished: boolean
 }
 
+interface Ranking {
+  points: number
+  rank: number
+  participant_id: string
+  profiles: {
+    username: string
+    avatar_url: string | null
+  }
+}
+
 export default function GameHost({ 
   game: initialGame,
   user 
@@ -36,7 +47,7 @@ export default function GameHost({
   user: { id: string }
 }) {
   const [game, setGame] = useState(initialGame)
-  const [rankings, setRankings] = useState([])
+  const [rankings, setRankings] = useState<Ranking[]>([])
   const supabase = createClient()
 
   // Procesăm întrebările pentru a fi mai ușor de folosit
@@ -47,14 +58,17 @@ export default function GameHost({
   const fetchRankings = async () => {
     const { data, error } = await supabase
       .from('game_rankings')
-      .select(`
+      .select<string, Ranking>(`
         points,
         rank,
         participant_id,
-        profiles(username, avatar_url)
+        profiles (
+          username,
+          avatar_url
+        )
       `)
       .eq('game_id', game.id)
-      .order('points', { ascending: false }) // Sortăm descrescător după puncte
+      .order('points', { ascending: false })
 
     if (error) {
       console.error('Error fetching rankings:', error)
@@ -87,18 +101,16 @@ export default function GameHost({
           if (payload.eventType === 'UPDATE') {
             const { data: updatedGame } = await supabase
               .from('games')
-              .select(`
+              .select<string, Game>(`
                 id,
                 host_id,
-                quiz_id,
                 active_question_id,
                 is_finished,
-                created_at,
-                quiz:quizzes(
+                quiz:quizzes!inner (
                   id,
                   title,
-                  questions:quiz_questions(
-                    question:questions(
+                  questions:quiz_questions (
+                    question:questions (
                       id,
                       question,
                       correct_answer,
@@ -137,7 +149,7 @@ export default function GameHost({
     
     if (nextIndex >= questions.length) {
       // Terminăm jocul
-      const { error, data } = await supabase
+      const { data, error } = await supabase
         .from('games')
         .update({ 
           is_finished: true,
@@ -145,18 +157,16 @@ export default function GameHost({
           updated_at: new Date().toISOString()
         })
         .eq('id', game.id)
-        .select(`
+        .select<string, Game>(`
           id,
           host_id,
-          quiz_id,
           active_question_id,
           is_finished,
-          created_at,
-          quiz:quizzes(
+          quiz:quizzes!inner (
             id,
             title,
-            questions:quiz_questions(
-              question:questions(
+            questions:quiz_questions (
+              question:questions (
                 id,
                 question,
                 correct_answer,
@@ -172,31 +182,31 @@ export default function GameHost({
         return
       }
 
-      setGame(data)
-      toast.success("Joc finalizat!")
+      if (data) {
+        setGame(data)
+        toast.success("Joc finalizat!")
+      }
       return
     }
 
     // Actualizăm întrebarea activă
-    const { error, data } = await supabase
+    const { data, error } = await supabase
       .from('games')
       .update({ 
         active_question_id: questions[nextIndex].id,
         updated_at: new Date().toISOString()
       })
       .eq('id', game.id)
-      .select(`
+      .select<string, Game>(`
         id,
         host_id,
-        quiz_id,
         active_question_id,
         is_finished,
-        created_at,
-        quiz:quizzes(
+        quiz:quizzes!inner (
           id,
           title,
-          questions:quiz_questions(
-            question:questions(
+          questions:quiz_questions (
+            question:questions (
               id,
               question,
               correct_answer,
@@ -212,8 +222,22 @@ export default function GameHost({
       return
     }
 
-    setGame(data)
+    if (data) {
+      setGame(data)
+    }
   }
+
+  // Extrage toate răspunsurile pentru întrebarea curentă
+  const currentQuestion = game.quiz.questions.find(
+    q => q.question.id === game.active_question_id
+  )?.question;
+
+  const allAnswers = currentQuestion 
+    ? [
+        currentQuestion.correct_answer,
+        ...currentQuestion.incorrect_answers
+      ].sort(() => Math.random() - 0.5) // Amestecă răspunsurile
+    : [];
 
   if (!game?.quiz) {
     return <div>Loading...</div>
@@ -245,15 +269,40 @@ export default function GameHost({
           </Card>
         )}
 
+        <div className="space-y-4">
+          <div 
+            role="radiogroup" 
+            aria-labelledby="question"
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
+            {allAnswers.map((answer, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "p-4 border rounded-lg cursor-pointer transition-colors",
+                  "bg-white hover:bg-gray-50",
+                  "dark:bg-gray-800 dark:hover:bg-gray-700",
+                  "border-gray-200 dark:border-gray-700"
+                )}
+              >
+                <span className="text-gray-900 dark:text-gray-100">
+                  {answer}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {game.is_finished && (
           <div className="text-center py-8">
             <h2 className="text-xl font-semibold">Joc Finalizat!</h2>
             <p className="text-muted-foreground">
-              Verifică clasamentul pentru rezultate.
+              Clasamentul și răspunsurile corecte:
             </p>
             <GameRankings 
               rankings={rankings}
               className="mt-6"
+              isFinished={game.is_finished}
             />
           </div>
         )}
