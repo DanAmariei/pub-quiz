@@ -3,6 +3,9 @@
 import { Card } from "@/components/ui/card"
 import ParticipantAvatars from "./participant-avatars"
 import { useGameParticipants } from "../_hooks/use-game-participants"
+import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
 interface GameHeaderProps {
   gameId: string
@@ -42,6 +45,14 @@ export default function GameHeader({
             <ParticipantAvatars participants={participants} />
           )}
         </div>
+        {isFinished && (
+          <Button variant="outline" asChild>
+            <Link href="/games" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Înapoi la jocuri
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   )

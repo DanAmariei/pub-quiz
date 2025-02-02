@@ -310,10 +310,14 @@ export default function GameParticipant({
     return (
       <div className="">
         <div className="flex flex-col gap-6 sm:gap-8 max-w-2xl mx-auto">
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold">{game.quiz.title}</h1>
-            <p className="text-muted-foreground">Jocul s-a încheiat</p>
-          </div>
+          <GameHeader
+            gameId={game.id}
+            quizTitle={game.quiz.title}
+            currentQuestionNumber={activeQuestionIndex + 1}
+            totalQuestions={game.quiz.questions.length}
+            isHost={false}
+            isFinished={game.is_finished}
+          />
 
           <GameRankings 
             gameId={game.id}
