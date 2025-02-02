@@ -59,6 +59,7 @@ export interface Tournament {
   start_date: string
   stages: number
   status: 'upcoming' | 'active' | 'completed'
+  games_count?: number
   participants?: Array<{
     username: string
   }>
@@ -90,10 +91,14 @@ export interface Game {
   active_question_id: string | null;
   is_finished: boolean;
   created_at: string;
+  title: string;
+  host: {
+    username: string;
+  };
   quiz: {
     id: string;
     title: string;
-    questions: Array<{
+    questions?: Array<{
       question: Question;
     }>;
   };

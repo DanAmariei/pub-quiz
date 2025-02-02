@@ -8,10 +8,28 @@ export default async function TurneePage() {
   const canCreateTournament = profile?.is_host || profile?.is_admin;
 
   const supabase = createClient();
-  const { data: tournaments } = await supabase
+  const { data: tournaments, error } = await supabase
     .from('tournaments')
     .select('*')
     .order('start_date', { ascending: true });
+
+  console.log('tournaments basic query:', { tournaments, error });
+
+  let formattedTournaments = tournaments || [];
+  
+  if (tournaments && tournaments.length > 0) {
+    const { data: gamesCount } = await supabase
+      .from('games')
+      .select('tournament_id')
+      .in('tournament_id', tournaments.map(t => t.id));
+
+    console.log('games count query:', { gamesCount });
+
+    formattedTournaments = tournaments.map(tournament => ({
+      ...tournament,
+      games_count: gamesCount?.filter(g => g.tournament_id === tournament.id).length || 0
+    }));
+  }
 
   return (
     <main className="flex-1 container py-8">
@@ -27,10 +45,14 @@ export default async function TurneePage() {
         </div>
 
         <div className="flex flex-col gap-4 w-full max-w-2xl">
-          {tournaments?.map((tournament) => (
-            <TournamentCard key={tournament.id} tournament={tournament} />
+          {formattedTournaments?.map((tournament) => (
+            <TournamentCard 
+              key={tournament.id} 
+              tournament={tournament}
+              canDelete={canCreateTournament}
+            />
           ))}
-          {(!tournaments || tournaments.length === 0) && (
+          {(!formattedTournaments || formattedTournaments.length === 0) && (
             <p className="text-muted-foreground text-center py-8">
               Nu există turnee încă.
             </p>

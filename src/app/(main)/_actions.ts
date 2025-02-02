@@ -131,4 +131,30 @@ export async function deleteGame(gameId: string) {
     console.error('Error:', error)
     return { error: error instanceof Error ? error.message : 'An error occurred' }
   }
+}
+
+export async function deleteTournament(tournamentId: string) {
+  const { user } = await getProfile() || {}
+  if (!user) return { error: 'Unauthorized' }
+
+  const supabase = createClient()
+
+  try {
+    const { error } = await supabase
+      .from('tournaments')
+      .delete()
+      .eq('id', tournamentId)
+      .eq('created_by', user.id) // Ne asigurăm că doar creatorul poate șterge turneul
+
+    if (error) {
+      throw new Error(`Error deleting tournament: ${error.message}`)
+    }
+
+    revalidatePath('/tournaments')
+    return { success: true }
+    
+  } catch (error) {
+    console.error('Error:', error)
+    return { error: error instanceof Error ? error.message : 'An error occurred' }
+  }
 } 

@@ -159,8 +159,6 @@ export async function updateQuestion(
       return oldAnswer
     })
 
-    console.log('!!!!!!!! updateOrder ', updatedOrder)
-
     // 4. Actualizăm ordinea răspunsurilor în quiz_questions
     const { error: orderError } = await supabase
       .from('quiz_questions')

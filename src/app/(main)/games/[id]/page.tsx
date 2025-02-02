@@ -40,9 +40,6 @@ export default async function GamePage({
     .eq('id', id)
     .single()
 
-
-  console.log('Game query result:', { game, error })
-
   if (!game || error) {
     console.log('Game not found or error:', { id, error })
     notFound()
