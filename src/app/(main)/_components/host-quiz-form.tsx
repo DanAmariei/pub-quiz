@@ -34,7 +34,32 @@ interface HostQuizFormProps {
 
 export default function HostQuizForm({ quizes, tournaments }: HostQuizFormProps) {
   const [open, setOpen] = useState(false)
+  const [selectedQuiz, setSelectedQuiz] = useState("")
+  const [title, setTitle] = useState("")
+  const [selectedTournament, setSelectedTournament] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    const formData = new FormData()
+    formData.set('quiz_id', selectedQuiz)
+    formData.set('name', title)
+    formData.set('tournament_id', selectedTournament)
+
+    const result = await createGame(formData)
+
+    setIsLoading(false)
+
+    if (result.error) {
+      toast.error(result.error)
+      return
+    }
+
+    router.push(`/games/${result.gameId}`)
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -49,15 +74,7 @@ export default function HostQuizForm({ quizes, tournaments }: HostQuizFormProps)
           <DialogTitle>Creează Joc Nou</DialogTitle>
         </DialogHeader>
         <form 
-          action={async (formData) => {
-            const result = await createGame(formData)
-            if (result.error) {
-              toast.error(result.error)
-              return
-            }
-            setOpen(false)
-            router.push(`/games/${result.gameId}`)
-          }}
+          onSubmit={handleSubmit}
           className="space-y-4 pt-4"
         >
           <div className="space-y-2">
@@ -67,12 +84,18 @@ export default function HostQuizForm({ quizes, tournaments }: HostQuizFormProps)
               name="name"
               placeholder="ex: Quiz Night #1"
               required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="quiz_id">Alege Quiz</Label>
-            <Select name="quiz_id" required>
+            <Select
+              value={selectedQuiz}
+              onValueChange={setSelectedQuiz}
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selectează un quiz" />
               </SelectTrigger>
@@ -91,11 +114,15 @@ export default function HostQuizForm({ quizes, tournaments }: HostQuizFormProps)
 
           <div className="space-y-2">
             <Label htmlFor="tournament_id">Turneu (Opțional)</Label>
-            <Select name="tournament_id">
+            <Select
+              value={selectedTournament}
+              onValueChange={setSelectedTournament}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Selectează un turneu" />
+                <SelectValue placeholder="Alege un turneu" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">Fără turneu</SelectItem>
                 {tournaments.map((tournament) => (
                   <SelectItem key={tournament.id} value={tournament.id}>
                     {tournament.name}
@@ -109,7 +136,7 @@ export default function HostQuizForm({ quizes, tournaments }: HostQuizFormProps)
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Anulează
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={isLoading}>
               Creează Joc
             </Button>
           </div>

@@ -4,7 +4,6 @@ import { getProfile } from "@/utils/get-profile"
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 
-
 export async function createTournament(formData: FormData) {
   const { user, profile } = await getProfile() || {}
   
@@ -79,33 +78,33 @@ export async function startQuizGame(formData: FormData) {
 }
 
 export async function createGame(formData: FormData) {
-  const { user } = await getProfile() || {}
-  if (!user) return { error: 'Unauthorized' }
-
   const supabase = createClient()
 
-  try {
-    const { data: game, error } = await supabase
-      .from('games')
-      .insert({
-        quiz_id: formData.get('quiz_id'),
-        host_id: user.id,
-        title: formData.get('name')
-      })
-      .select('id')
-      .single()
-
-    if (error) {
-      throw new Error(`Error creating game: ${error.message}`)
-    }
-
-    revalidatePath('/games')
-    return { gameId: game.id }
-    
-  } catch (error) {
-    console.error('Error:', error)
-    return { error: error instanceof Error ? error.message : 'An error occurred' }
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError || !user) {
+    return { error: 'Unauthorized' }
   }
+
+  const { data: game, error: gameError } = await supabase
+    .from('games')
+    .insert({
+      host_id: user.id,
+      quiz_id: formData.get('quiz_id'),
+      title: formData.get('name'),
+      tournament_id: formData.get('tournament_id') === 'none' ? null : formData.get('tournament_id')
+    })
+    .select()
+    .single()
+
+  if (gameError) {
+    return { error: 'Error creating game' }
+  }
+
+  revalidatePath('/')
+  revalidatePath('/games')
+  revalidatePath('/my-games')
+
+  return { gameId: game.id }
 }
 
 export async function deleteGame(gameId: string) {
