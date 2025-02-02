@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import GameRankings from "./game-rankings"
 import { cn } from "@/lib/utils"
 import QuestionDisplay from "./question-display"
+import GameHeader from "./game-header"
 
 interface Question {
   id: string
@@ -43,6 +44,14 @@ interface Ranking {
   }
 }
 
+interface Participant {
+  id: string
+  profiles: {
+    username: string
+    avatar_url: string | null
+  }
+}
+
 export default function GameHost({ 
   game: initialGame,
   user 
@@ -52,6 +61,7 @@ export default function GameHost({
 }) {
   const [game, setGame] = useState(initialGame)
   const [rankings, setRankings] = useState<Ranking[]>([])
+  const [participants, setParticipants] = useState<Participant[]>([])
   const supabase = createClient()
 
   // Procesăm întrebările pentru a fi mai ușor de folosit
@@ -83,11 +93,42 @@ export default function GameHost({
     setRankings(data)
   }
 
+  // Funcție pentru a obține participanții
+  const fetchParticipants = async () => {
+    const { data, error } = await supabase
+      .from('game_participants')
+      .select(`
+        participant_id,
+        profiles:participant_id (
+          id,
+          username,
+          avatar_url
+        )
+      `)
+      .eq('game_id', game.id);
+
+    if (error) {
+      console.error('Error fetching participants:', error);
+      return;
+    }
+
+    // Transformăm datele pentru a se potrivi cu interfața Participant
+    const formattedParticipants = data?.map(p => ({
+      id: p.participant_id,
+      profiles: p.profiles
+    }));
+
+    setParticipants(formattedParticipants || []);
+  };
+
   useEffect(() => {
     // Fetch rankings if the game is finished on mount
     if (game.is_finished) {
       fetchRankings()
     }
+
+    // Fetch participants on mount
+    fetchParticipants()
 
     const channel = supabase
       .channel(`game_${game.id}`)
@@ -252,19 +293,22 @@ export default function GameHost({
   return (
     <div className="container py-8">
       <div className="flex flex-col gap-8 max-w-2xl mx-auto">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">{game.quiz.title}</h1>
-            <p className="text-muted-foreground">Tu ești host-ul acestui joc</p>
-          </div>
-          {!game.is_finished && (
-            <Button onClick={handleNextQuestion}>
-              {activeQuestionIndex === -1 ? "Start" : 
-               activeQuestionIndex === questions.length - 1 ? "Finalizează" : 
-               "Următoarea Întrebare"}
-            </Button>
-          )}
-        </div>
+        <GameHeader
+          gameId={game.id}
+          quizTitle={game.quiz.title}
+          currentQuestionNumber={activeQuestionIndex + 1}
+          totalQuestions={questions.length}
+          isHost={true}
+          isFinished={game.is_finished}
+        />
+
+        {!game.is_finished && (
+          <Button onClick={handleNextQuestion}>
+            {activeQuestionIndex === -1 ? "Start" : 
+             activeQuestionIndex === questions.length - 1 ? "Finalizează" : 
+             "Următoarea Întrebare"}
+          </Button>
+        )}
 
         {game.active_question_id && questions[activeQuestionIndex] && (
           <QuestionDisplay

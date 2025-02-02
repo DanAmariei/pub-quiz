@@ -8,7 +8,6 @@ import { formatDate } from "@/lib/utils"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
-import TournamentCard from './tournaments/_components/tournament-card'
 
 interface Tournament {
   id: string

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Ranking } from "@/types/database"
 import GameRankings from "./game-rankings"
 import QuestionDisplay from "./question-display"
+import GameHeader from "./game-header"
 
 interface Question {
   id: string
@@ -61,27 +62,53 @@ export default function GameParticipant({
     q => q.question.id === game.active_question_id
   )?.question
 
-  // Amestecăm răspunsurile când se schimbă întrebarea activă
+  // Adăugăm un efect pentru a verifica răspunsul existent
+  useEffect(() => {
+    async function checkExistingAnswer() {
+      if (activeQuestion) {
+        // Reset state first
+        setSelectedAnswer('')
+        setHasAnswered(false)
+
+        const { data, error } = await supabase
+          .from('participant_answers')
+          .select('answer')
+          .eq('game_id', game.id)
+          .eq('participant_id', user.id)
+          .eq('question_id', activeQuestion.id)
+          .single()
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 este codul pentru "nu s-a găsit niciun răspuns"
+          console.error('Error checking existing answer:', error)
+          return
+        }
+
+        if (data) {
+          setSelectedAnswer(data.answer)
+          setHasAnswered(true)
+        }
+      }
+    }
+
+    checkExistingAnswer()
+  }, [activeQuestion?.id, game.id, user.id])
+
+  // Modificăm useEffect-ul pentru answers_order să nu mai gestioneze starea răspunsului
   useEffect(() => {
     if (activeQuestion) {
       const questionData = game.quiz.questions.find(
         q => q.question.id === game.active_question_id
       );
 
-      // Folosim direct answers_order dacă există
       if (questionData?.answers_order) {
         setShuffledAnswers(questionData.answers_order);
       } else {
-        // Fallback la randomizare doar dacă nu avem answers_order
         const answers = [
           activeQuestion.correct_answer,
           ...activeQuestion.incorrect_answers
         ].sort(() => Math.random() - 0.5);
         setShuffledAnswers(answers);
       }
-
-      setSelectedAnswer('');
-      setHasAnswered(false);
     }
   }, [activeQuestion?.id, game.active_question_id]);
 
@@ -89,11 +116,14 @@ export default function GameParticipant({
   const fetchRankings = async () => {
     const { data, error } = await supabase
       .from('game_rankings')
-      .select(`
+      .select<string, Ranking>(`
         points,
         rank,
         participant_id,
-        profiles(username, avatar_url)
+        profiles:profiles!inner (
+          username,
+          avatar_url
+        )
       `)
       .eq('game_id', game.id)
       .order('points', { ascending: false })
@@ -266,6 +296,11 @@ export default function GameParticipant({
     toast.success("Răspuns trimis cu succes!")
   }
 
+  // Găsim indexul întrebării active
+  const activeQuestionIndex = game.quiz.questions.findIndex(
+    q => q.question.id === game.active_question_id
+  )
+
   if (!game?.quiz) {
     return <div>Loading...</div>
   }
@@ -328,8 +363,18 @@ export default function GameParticipant({
   return (
     <div className="container py-8">
       <div className="flex flex-col gap-8 max-w-2xl mx-auto">
+        <GameHeader
+          gameId={game.id}
+          quizTitle={game.quiz.title}
+          currentQuestionNumber={activeQuestionIndex + 1}
+          totalQuestions={game.quiz.questions.length}
+          isHost={false}
+          isFinished={game.is_finished}
+        />
+
         {activeQuestion && (
           <QuestionDisplay
+            questionNumber={activeQuestionIndex + 1}
             question={activeQuestion.question}
             answers={shuffledAnswers}
             selectedAnswer={selectedAnswer}
