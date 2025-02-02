@@ -9,12 +9,18 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Ranking } from "@/types/database"
 import GameRankings from "./game-rankings"
+import QuestionDisplay from "./question-display"
 
 interface Question {
   id: string
   question: string
   correct_answer: string
   incorrect_answers: string[]
+}
+
+interface QuizQuestion {
+  question: Question
+  answers_order: string[]
 }
 
 interface Game {
@@ -26,14 +32,10 @@ interface Game {
   quiz: {
     id: string
     title: string
-    questions: Array<{
-      question: {
-        id: string
-        question: string
-        correct_answer: string
-        incorrect_answers: string[]
-      }
-    }>
+    questions: {
+      question: Question
+      answers_order: string[]
+    }[]
   }
 }
 
@@ -62,15 +64,26 @@ export default function GameParticipant({
   // Amestecăm răspunsurile când se schimbă întrebarea activă
   useEffect(() => {
     if (activeQuestion) {
-      const answers = [
-        activeQuestion.correct_answer,
-        ...activeQuestion.incorrect_answers
-      ].sort(() => Math.random() - 0.5)
-      setShuffledAnswers(answers)
-      setSelectedAnswer('')
-      setHasAnswered(false)
+      const questionData = game.quiz.questions.find(
+        q => q.question.id === game.active_question_id
+      );
+
+      // Folosim direct answers_order dacă există
+      if (questionData?.answers_order) {
+        setShuffledAnswers(questionData.answers_order);
+      } else {
+        // Fallback la randomizare doar dacă nu avem answers_order
+        const answers = [
+          activeQuestion.correct_answer,
+          ...activeQuestion.incorrect_answers
+        ].sort(() => Math.random() - 0.5);
+        setShuffledAnswers(answers);
+      }
+
+      setSelectedAnswer('');
+      setHasAnswered(false);
     }
-  }, [activeQuestion?.id])
+  }, [activeQuestion?.id, game.active_question_id]);
 
   // Funcție pentru a obține clasamentul
   const fetchRankings = async () => {
@@ -98,23 +111,24 @@ export default function GameParticipant({
   const reloadGameData = async () => {
     const { data: updatedGame, error } = await supabase
       .from('games')
-      .select(`
+      .select<string, Game>(`
         id,
         host_id,
         quiz_id,
         active_question_id,
         is_finished,
         created_at,
-        quiz:quizzes(
+        quiz:quizzes!inner (
           id,
           title,
-          questions:quiz_questions(
-            question:questions(
+          questions:quiz_questions (
+            question:questions (
               id,
               question,
               correct_answer,
               incorrect_answers
-            )
+            ),
+            answers_order
           )
         )
       `)
@@ -151,22 +165,23 @@ export default function GameParticipant({
             // Actualizăm starea jocului când se modifică
             const { data: updatedGame } = await supabase
               .from('games')
-              .select(`
+              .select<string, Game>(`
                 id,
                 host_id,
                 quiz_id,
                 active_question_id,
                 is_finished,
-                quiz:quizzes(
+                quiz:quizzes!inner (
                   id,
                   title,
-                  questions:quiz_questions(
-                    question:questions(
+                  questions:quiz_questions (
+                    question:questions (
                       id,
                       question,
                       correct_answer,
                       incorrect_answers
-                    )
+                    ),
+                    answers_order
                   )
                 )
               `)
@@ -312,33 +327,33 @@ export default function GameParticipant({
 
   return (
     <div className="container py-8">
-      <div className="max-w-2xl mx-auto">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            {activeQuestion?.question}
-          </h2>
+      <div className="flex flex-col gap-8 max-w-2xl mx-auto">
+        {activeQuestion && (
+          <QuestionDisplay
+            question={activeQuestion.question}
+            answers={shuffledAnswers}
+            selectedAnswer={selectedAnswer}
+            onAnswerSelect={setSelectedAnswer}
+            isInteractive={!hasAnswered}
+          />
+        )}
 
-          <RadioGroup
-            value={selectedAnswer}
-            onValueChange={setSelectedAnswer}
-            className="space-y-3"
-          >
-            {shuffledAnswers.map((answer) => (
-              <div key={answer} className="flex items-center space-x-2">
-                <RadioGroupItem value={answer} id={answer} />
-                <Label htmlFor={answer}>{answer}</Label>
-              </div>
-            ))}
-          </RadioGroup>
-
+        {activeQuestion && !hasAnswered && (
           <Button
             onClick={handleSubmitAnswer}
-            disabled={!selectedAnswer || hasAnswered}
-            className="mt-4"
+            disabled={!selectedAnswer}
+            className="ml-auto"
           >
             Trimite Răspunsul
           </Button>
-        </Card>
+        )}
+
+        {game.is_finished && (
+          <GameRankings 
+            rankings={rankings}
+            title="Clasament Final"
+          />
+        )}
       </div>
     </div>
   )

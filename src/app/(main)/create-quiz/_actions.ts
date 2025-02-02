@@ -84,13 +84,20 @@ export async function createQuiz(formData: FormData) {
         throw new Error(`Error creating question: ${questionError.message}`)
       }
 
-      // Creăm relația între quiz și întrebare, incluzând order aici
+      // Generăm ordinea aleatorie a răspunsurilor
+      const allAnswers = [
+        q.correct_answer,
+        ...q.incorrect_answers
+      ].sort(() => Math.random() - 0.5)
+
+      // Creăm relația între quiz și întrebare, incluzând ordinea răspunsurilor
       const { error: relationError } = await supabase
         .from('quiz_questions')
         .insert({
           quiz_id: quiz.id,
           question_id: question.id,
-          order: index // Adăugăm order în relație
+          order: index,
+          answers_order: allAnswers // Adăugăm ordinea răspunsurilor
         })
 
       if (relationError) {

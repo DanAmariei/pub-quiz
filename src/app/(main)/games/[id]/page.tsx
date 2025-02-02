@@ -32,7 +32,8 @@ export default async function GamePage({
             question,
             correct_answer,
             incorrect_answers
-          )
+          ),
+          answers_order
         )
       )
     `)

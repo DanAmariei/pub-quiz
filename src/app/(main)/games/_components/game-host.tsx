@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
 import GameRankings from "./game-rankings"
 import { cn } from "@/lib/utils"
+import QuestionDisplay from "./question-display"
 
 interface Question {
   id: string
@@ -15,15 +16,18 @@ interface Question {
   incorrect_answers: string[]
 }
 
+interface QuizQuestion {
+  question: Question
+  answers_order: string[]
+}
+
 interface Game {
   id: string
   host_id: string
   quiz: {
     id: string
     title: string
-    questions: Array<{
-      question: Question
-    }>
+    questions: QuizQuestion[]
   }
   active_question_id: string | null
   is_finished: boolean
@@ -115,7 +119,8 @@ export default function GameHost({
                       question,
                       correct_answer,
                       incorrect_answers
-                    )
+                    ),
+                    answers_order
                   )
                 )
               `)
@@ -171,7 +176,8 @@ export default function GameHost({
                 question,
                 correct_answer,
                 incorrect_answers
-              )
+              ),
+              answers_order
             )
           )
         `)
@@ -211,7 +217,8 @@ export default function GameHost({
               question,
               correct_answer,
               incorrect_answers
-            )
+            ),
+            answers_order
           )
         )
       `)
@@ -228,16 +235,15 @@ export default function GameHost({
   }
 
   // Extrage toate răspunsurile pentru întrebarea curentă
-  const currentQuestion = game.quiz.questions.find(
+  const questionData = game.quiz.questions.find(
     q => q.question.id === game.active_question_id
-  )?.question;
+  );
 
-  const allAnswers = currentQuestion 
-    ? [
-        currentQuestion.correct_answer,
-        ...currentQuestion.incorrect_answers
-      ].sort(() => Math.random() - 0.5) // Amestecă răspunsurile
-    : [];
+  const allAnswers = questionData?.answers_order || 
+    (questionData?.question ? [
+      questionData.question.correct_answer,
+      ...questionData.question.incorrect_answers
+    ].sort(() => Math.random() - 0.5) : []);
 
   if (!game?.quiz) {
     return <div>Loading...</div>
@@ -261,37 +267,13 @@ export default function GameHost({
         </div>
 
         {game.active_question_id && questions[activeQuestionIndex] && (
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">
-              Întrebarea {activeQuestionIndex + 1}
-            </h2>
-            <p>{questions[activeQuestionIndex].question}</p>
-          </Card>
+          <QuestionDisplay
+            questionNumber={activeQuestionIndex + 1}
+            question={questions[activeQuestionIndex].question}
+            answers={allAnswers}
+            isInteractive={false}
+          />
         )}
-
-        <div className="space-y-4">
-          <div 
-            role="radiogroup" 
-            aria-labelledby="question"
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
-            {allAnswers.map((answer, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "p-4 border rounded-lg cursor-pointer transition-colors",
-                  "bg-white hover:bg-gray-50",
-                  "dark:bg-gray-800 dark:hover:bg-gray-700",
-                  "border-gray-200 dark:border-gray-700"
-                )}
-              >
-                <span className="text-gray-900 dark:text-gray-100">
-                  {answer}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {game.is_finished && (
           <div className="text-center py-8">
