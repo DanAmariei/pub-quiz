@@ -109,7 +109,7 @@ export default function GamesPage() {
     <div className="container py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Jocuri Active</h1>
-        <Link href="/quizes">
+        <Link href="/create-game">
           <Button>Creează Joc Nou</Button>
         </Link>
       </div>
