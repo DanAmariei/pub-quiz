@@ -1,0 +1,147 @@
+[
+  {
+    "_id": {
+      "$oid": "63eac27f327a634f518f51b9"
+    },
+    "title": "Dragoste, Relații și Sex",
+    "questions": [
+      {
+        "question": "Ce este îndrăgostirea?",
+        "answers": [
+          "Un mod de a fi sigur că vei găsi partenerul perfect.",
+          "O afecțiune fizică, care poate fi tratată prin medicamente.",
+          "O obsesie pentru cineva, care te face să-ți pierzi controlul.",
+          "O emoție profundă și puternică, care poate fi descrisă prin sentimente intense de atracție și dorință și trilu Lee lu!."
+        ],
+        "correct_answer": "O emoție profundă și puternică, care poate fi descrisă prin sentimente intense de atracție și dorință și trilu Lee lu!.",
+        "_id": {
+          "$oid": "63eac27f327a634f518f51ba"
+        }
+      },
+      {
+        "question": "Iubirea adevărată este necondiționată.",
+        "answers": [
+          "Adevărat",
+          "Fals"
+        ],
+        "correct_answer": "Adevărat",
+        "_id": {
+          "$oid": "63eac27f327a634f518f51bb"
+        }
+      },
+      {
+        "question": "Ce este sexul?",
+        "answers": [
+          "Un mod de a te arăta mai puternic și mai popular în fața prietenilor.",
+          "O activitate care nu are nicio importanță emoțională sau relațională.",
+          "O activitate fizică între două sau mai multe persoane, care poate fi folosită pentru a produce plăcere și pentru a face legături emoționale.",
+          "O activitate care ar trebui evitată înainte de căsătorie."
+        ],
+        "correct_answer": "O activitate fizică între două sau mai multe persoane, care poate fi folosită pentru a produce plăcere și pentru a face legături emoționale.",
+        "_id": {
+          "$oid": "63eac27f327a634f518f51bc"
+        }
+      },
+      {
+        "question": "Educația Sexuală NU este importantă",
+        "answers": [
+          "Adevărat",
+          "Fals"
+        ],
+        "correct_answer": "Fals",
+        "_id": {
+          "$oid": "63eac27f327a634f518f51bd"
+        }
+      },
+      {
+        "question": "Educația Sexuală ajută la dezvoltarea sănătoasă fizică, psihică și emoțională a indivizilor. ",
+        "answers": [
+          "Adevărat",
+          "Fals"
+        ],
+        "correct_answer": "Adevărat",
+        "_id": {
+          "$oid": "63eac27f327a634f518f51be"
+        }
+      },
+      {
+        "question": "Care este baza unei relații sănătoase?",
+        "answers": [
+          "Amantele/Amanții",
+          "Secretele",
+          "Adevărul și Transparența",
+          "Banii"
+        ],
+        "correct_answer": "Adevărul și Transparența",
+        "_id": {
+          "$oid": "63eac27f327a634f518f51bf"
+        }
+      },
+      {
+        "question": "Ce rol joacă respectul într-o relație de dragoste?",
+        "answers": [
+          "Respectul nu este important într-o relație de dragoste, deoarece acesta poate fi interpretat drept limitare.",
+          "Respectul poate întări legătura emoțională și poate ajuta la menținerea unei relații sănătoase.",
+          "Respectul poate distruge o relație de dragoste, dacă este prea mult sau dacă este impus.",
+          "Respectul nu are niciun rol într-o relație de dragoste."
+        ],
+        "correct_answer": "Respectul poate întări legătura emoțională și poate ajuta la menținerea unei relații sănătoase.",
+        "_id": {
+          "$oid": "63eac27f327a634f518f51c0"
+        }
+      },
+      {
+        "question": "Gelozia este",
+        "answers": [
+          "Frica de a pierde persoana dragă",
+          "Toate Variantele",
+          "O emoție nocivă",
+          "Lipsa de încredere în sine"
+        ],
+        "correct_answer": "Toate Variantele",
+        "_id": {
+          "$oid": "63eac27f327a634f518f51c1"
+        }
+      },
+      {
+        "question": "Dincolo de orice frică și de tot ce este material, oamenii vor doar să iubească și să fie iubiți",
+        "answers": [
+          "Fals",
+          "Adevărat"
+        ],
+        "correct_answer": "Adevărat",
+        "_id": {
+          "$oid": "63eac27f327a634f518f51c2"
+        }
+      },
+      {
+        "question": "Care este importanța comunicării într-o relație de dragoste?",
+        "answers": [
+          "Comunicarea deschisă și sinceră poate întări legătura emoțională și poate ajuta la rezolvarea problemelor.",
+          "Comunicarea nu este necesară într-o relație de dragoste, deoarece sentimentele sunt suficiente.",
+          "Comunicarea poate distruge o relație de dragoste, deoarece poate crea conflicte.",
+          "Comunicarea nu este importantă într-o relație de dragoste."
+        ],
+        "correct_answer": "Comunicarea deschisă și sinceră poate întări legătura emoțională și poate ajuta la rezolvarea problemelor.",
+        "_id": {
+          "$oid": "63eac27f327a634f518f51c3"
+        }
+      }
+    ],
+    "creator": {
+      "$oid": "63e90b3b809e9d498b3b6d8c"
+    },
+    "difficulty": "easy",
+    "type": "",
+    "category": "AllStar 14.02.22",
+    "total": 10,
+    "public": true,
+    "createdAt": {
+      "$date": "2023-02-13T23:06:39.723Z"
+    },
+    "updatedAt": {
+      "$date": "2023-02-13T23:06:39.723Z"
+    },
+    "__v": 0
+  }
+]

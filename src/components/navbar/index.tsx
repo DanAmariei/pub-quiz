@@ -1,8 +1,13 @@
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { ModeToggle } from "./mode-toggle";
+'use client'
 
-import { signOut } from "@/app/actions";
+import { useEffect, useState } from "react"
+import { createClient } from "@/utils/supabase/client"
+import { cn } from "@/utils/cn"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { usePathname } from "next/navigation"
+import { ModeToggle } from "./mode-toggle"
+import { signOut } from "@/app/actions"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,12 +15,48 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Lock, User } from "lucide-react";
-import { getProfile } from '@/utils/get-profile';
+} from "@/components/ui/dropdown-menu"
+import { Lock, User } from "lucide-react"
 
-const Navbar = async () => {
-  const { user, profile } = await getProfile() || {};
+export default function Navbar() {
+  const [user, setUser] = useState<any>(null)
+  const [isHost, setIsHost] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [username, setUsername] = useState("")
+  const [avatarUrl, setAvatarUrl] = useState("")
+  const pathname = usePathname()
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function getProfile() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUser(user)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username, avatar_url, is_host, is_admin')
+          .eq('id', user.id)
+          .single()
+
+        if (profile) {
+          setUsername(profile.username || user.email?.split('@')[0] || '')
+          setAvatarUrl(profile.avatar_url || '')
+          setIsHost(profile.is_host)
+          setIsAdmin(profile.is_admin)
+        }
+      }
+    }
+
+    getProfile()
+  }, [])
+
+  const links = [
+    { href: "/", label: "Acasă" },
+    { href: "/games", label: "Jocuri" },
+    // Afișăm link-ul Quiz-uri doar pentru host sau admin
+    ...(isHost || isAdmin ? [{ href: "/quizes", label: "Quiz-uri" }] : []),
+    ...(isHost || isAdmin ? [{ href: "/tournaments", label: "Turnee" }] : []),
+  ]
 
   return (
     <header className="w-full">
@@ -26,50 +67,32 @@ const Navbar = async () => {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
-          <Link 
-            href="/" 
-            className="text-sm font-medium transition-colors hover:text-primary"
-            aria-label="Navigare către pagina principală"
-          >
-            Home
-          </Link>
-          <Link 
-            href="/quizes" 
-            className="text-sm font-medium transition-colors hover:text-primary"
-            aria-label="Navigare către pagina de quizuri"
-          >
-            Quizes
-          </Link>
-          <Link 
-            href="/games" 
-            className="text-sm font-medium transition-colors hover:text-primary"
-            aria-label="Navigare către pagina de games"
-          >
-            Games
-          </Link>
-          <Link 
-            href="/tournaments" 
-            className="text-sm font-medium transition-colors hover:text-primary"
-            aria-label="Navigare către pagina de turnee"
-          >
-            Turnee
-          </Link>
+          {links.map((link) => (
+            <Link 
+              key={link.href}
+              href={link.href} 
+              className="text-sm font-medium transition-colors hover:text-primary"
+              aria-label={`Navigare către pagina ${link.label}`}
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
         <div className="flex items-center gap-3">
           {user ? (
             <>
               <span className="text-sm font-medium hidden sm:block">
-                {profile?.username || user.email?.split('@')[0]}
+                {username}
               </span>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="icon" variant="ghost">
-                    {profile?.avatar_url ? (
+                    {avatarUrl ? (
                       <img
-                        src={profile.avatar_url}
-                        alt={profile.username || "Avatar utilizator"}
+                        src={avatarUrl}
+                        alt={username}
                         className="w-8 h-8 rounded-full"
                       />
                     ) : (
@@ -77,75 +100,50 @@ const Navbar = async () => {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-
-                <DropdownMenuContent sideOffset={5}>
-                  <DropdownMenuLabel>
-                    {user.email}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Contul meu</DropdownMenuLabel>
                   <DropdownMenuItem asChild>
-                    <Link 
-                      href="/account" 
-                      className="cursor-pointer w-full"
-                      aria-label="Navigare către pagina contului meu"
-                    >
-                      Contul Meu
+                    <Link href="/profile" className="cursor-pointer">
+                      Profil
                     </Link>
                   </DropdownMenuItem>
 
                   <DropdownMenuItem asChild>
-                    <Link 
-                      href="/my-games" 
-                      className="cursor-pointer w-full"
-                      aria-label="Navigare către jocurile mele"
-                    >
+                    <Link href="/my-games" className="cursor-pointer">
                       Jocurile Mele
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem asChild>
-                    <Link 
-                      href="/my-tournaments" 
-                      className="cursor-pointer w-full"
-                      aria-label="Navigare către turneele mele"
-                    >
-                      Turneele Mele
-                    </Link>
-                  </DropdownMenuItem>
-
-                  {profile?.is_host && (
+                  {isHost && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link 
-                          href="/create-quiz" 
-                          className="cursor-pointer w-full"
-                          aria-label="Crează un quiz nou"
-                        >
+                        <Link href="/create-quiz" className="cursor-pointer">
                           Crează Quiz
                         </Link>
                       </DropdownMenuItem>
                     </>
                   )}
 
-                  {(profile?.is_host || profile?.is_admin) && (
+                  {(isHost || isAdmin) && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link 
-                          href="/admin/categories" 
-                          className="cursor-pointer w-full"
-                          aria-label="Administrare categorii"
-                        >
+                        <Link href="/admin/categories" className="cursor-pointer">
                           Administrare Categorii
                         </Link>
                       </DropdownMenuItem>
+                      {isAdmin && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/import-quizzes" className="cursor-pointer">
+                            Import Quiz-uri
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                     </>
                   )}
 
                   <DropdownMenuSeparator />
-
                   <DropdownMenuItem className="p-0" asChild>
                     <form action={signOut}>
                       <Button
@@ -173,7 +171,5 @@ const Navbar = async () => {
         </div>
       </div>
     </header>
-  );
-};
-
-export default Navbar;
+  )
+}

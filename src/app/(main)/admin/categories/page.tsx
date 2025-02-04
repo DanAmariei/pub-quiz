@@ -13,6 +13,7 @@ import {
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import CategoryForm from "./_components/category-form";
 import { revalidatePath } from "next/cache";
+import DeleteCategoryButton from "./_components/delete-category-button";
 
 export default async function CategoriesPage() {
   const { user, profile } = await getProfile() || {};
@@ -70,12 +71,10 @@ export default async function CategoriesPage() {
                           <Pencil className="w-4 h-4" />
                         </Button>
                       </CategoryForm>
-                      <form action={deleteCategory}>
-                        <input type="hidden" name="id" value={category.id} />
-                        <Button size="icon" variant="ghost" className="text-destructive">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </form>
+                      <DeleteCategoryButton 
+                        id={category.id} 
+                        name={category.name} 
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
