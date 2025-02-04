@@ -26,6 +26,7 @@ interface QuizQuestion {
 interface Game {
   id: string
   host_id: string
+  title: string
   quiz: {
     id: string
     title: string
@@ -294,22 +295,29 @@ export default function GameHost({
   return (
     <div className="">
       <div className="flex flex-col gap-6 sm:gap-8 max-w-2xl mx-auto">
-        <GameHeader
-          gameId={game.id}
-          quizTitle={game.quiz.title}
-          currentQuestionNumber={activeQuestionIndex + 1}
-          totalQuestions={questions.length}
-          isHost={true}
-          isFinished={game.is_finished}
-        />
+        <div className="flex items-center justify-between">
+          <GameHeader
+            gameId={game.id}
+            quizTitle={game.quiz.title}
+            gameTitle={game.title}
+            currentQuestionNumber={activeQuestionIndex + 1}
+            totalQuestions={questions.length}
+            isHost={true}
+            isFinished={game.is_finished}
+          />
 
-        {!game.is_finished && (
-          <Button onClick={handleNextQuestion}>
-            {activeQuestionIndex === -1 ? "Start" : 
-             activeQuestionIndex === questions.length - 1 ? "Finalizează" : 
-             "Următoarea Întrebare"}
-          </Button>
-        )}
+          {!game.is_finished && (
+            <Button 
+              onClick={handleNextQuestion}
+              size="sm"
+              className="shrink-0 ml-4"
+            >
+              {activeQuestionIndex === -1 ? "Start" : 
+               activeQuestionIndex === questions.length - 1 ? "Finalizează" : 
+               "Următoarea Întrebare"}
+            </Button>
+          )}
+        </div>
 
         {game.active_question_id && questions[activeQuestionIndex] && (
           <QuestionDisplay

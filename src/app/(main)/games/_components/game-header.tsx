@@ -29,7 +29,7 @@ export default function GameHeader({
   const participants = useGameParticipants(gameId)
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full">
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">{quizTitle}</h1>
@@ -39,15 +39,16 @@ export default function GameHeader({
             </p>
           )}
           <p className="text-muted-foreground">
-            {isHost ? "Tu ești host-ul acestui joc" : "Tu ești participant"}
+            <span className="font-medium">{participants.length}</span>
+            {' '}{participants.length !== 1 ? 'participanți' : 'participant'} în acest joc
           </p>
           {participants.length > 0 && (
             <ParticipantAvatars participants={participants} />
           )}
         </div>
         {isFinished && (
-          <Button variant="outline" asChild>
-            <Link href="/games" className="flex items-center gap-2">
+          <Button variant="outline" asChild className="ml-auto">
+            <Link href="/games" className="flex items-center gap-2 ml-auto">
               <ArrowLeft className="w-4 h-4" />
               Înapoi la jocuri
             </Link>

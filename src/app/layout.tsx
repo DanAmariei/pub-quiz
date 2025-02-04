@@ -79,6 +79,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ro" suppressHydrationWarning>
+      <head>
+        {/* Șterge sau actualizează calea către manifest */}
+      </head>
       <body className={cn(inter.className)}>
         <ThemeProvider
           attribute="class"

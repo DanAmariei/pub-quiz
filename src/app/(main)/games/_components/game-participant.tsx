@@ -31,6 +31,7 @@ interface Game {
   quiz_id: string
   active_question_id: string | null
   is_finished: boolean
+  title: string
   quiz: {
     id: string
     title: string
@@ -149,6 +150,7 @@ export default function GameParticipant({
         active_question_id,
         is_finished,
         created_at,
+        title,
         quiz:quizzes!inner (
           id,
           title,
@@ -314,6 +316,7 @@ export default function GameParticipant({
             gameId={game.id}
             quizTitle={game.quiz.title}
             currentQuestionNumber={activeQuestionIndex + 1}
+            gameTitle={game.title}
             totalQuestions={game.quiz.questions.length}
             isHost={false}
             isFinished={game.is_finished}

@@ -23,6 +23,7 @@ export default async function GamePage({
       active_question_id,
       is_finished,
       created_at,
+      title,
       quiz:quizzes(
         id,
         title,

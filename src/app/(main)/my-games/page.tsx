@@ -28,7 +28,7 @@ async function getGames() {
       created_at,
       is_finished,
       title,
-      quiz:quizzes (
+      quiz:quizzes!inner (
         title,
         description
       )
@@ -38,31 +38,38 @@ async function getGames() {
   // Obținem jocurile în care a participat
   const { data: participatedGames } = await supabase
     .from('game_participants')
-    .select<string, { game: GameWithQuiz }>(`
-      game:games (
+    .select<string, GameWithQuiz>(`
+      game:games!inner (
         id,
         created_at,
         is_finished,
         title,
-        quiz:quizzes (
+        quiz:quizzes!inner (
           title,
           description
         )
       )
     `)
     .eq('participant_id', user.id)
-    .order('created_at', { ascending: false })
 
-  return [
-    ...(hostedGames || []).map((game: GameWithQuiz) => ({ 
-      ...game, 
-      role: 'host' as const 
-    })),
-    ...(participatedGames || []).map(({ game }: { game: GameWithQuiz }) => ({ 
-      ...game, 
-      role: 'participant' as const 
-    }))
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  // Formatăm rezultatele
+  const hostedGamesList = (hostedGames || []).map(game => ({
+    ...game,
+    role: 'host' as const
+  }))
+
+  const participatedGamesList = (participatedGames || []).map((participant) => ({
+    id: participant.game.id,
+    created_at: participant.game.created_at,
+    is_finished: participant.game.is_finished,
+    title: participant.game.title,
+    quiz: participant.game.quiz,
+    role: 'participant' as const
+  }))
+
+  // Combinăm și sortăm toate jocurile
+  return [...hostedGamesList, ...participatedGamesList]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 }
 
 export default async function MyGamesPage() {

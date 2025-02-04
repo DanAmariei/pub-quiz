@@ -11,95 +11,72 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { updateProfile } from "../_actions";
 import type { Profile } from "@/types/database";
-import { ImagePlus } from "lucide-react";
-import { resizeImage } from "@/lib/image-utils";
-import { createClient } from "@/utils/supabase/client";
+
+import { useRouter } from "next/navigation";
+import { useFormStatus } from "react-dom";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "react-hot-toast";
+import { supabase } from "@/lib/supabase";
 
 interface EditProfileFormProps {
   profile: Profile | null;
 }
 
 export default function EditProfileForm({ profile }: EditProfileFormProps) {
-  const [error, setError] = useState<string>();
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar_url || null);
-  const [isUploading, setIsUploading] = useState(false);
+  const router = useRouter();
+  const [username, setUsername] = useState(profile?.username || '');
+  const [fullName, setFullName] = useState(profile?.full_name || '');
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
 
-  async function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Imaginea trebuie să fie mai mică de 5MB');
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      const compressionLevel = file.size > 2 * 1024 * 1024 ? 0.7 : 0.85;
-      const resizedBlob = await resizeImage(file, compressionLevel);
-      
-      // Convertim blob-ul înapoi în File pentru upload
-      const optimizedFile = new File([resizedBlob], file.name, {
-        type: 'image/jpeg'
-      });
-
-      // Folosim clientul Supabase pentru upload
-      const supabase = createClient();
-      
-      // Generăm un nume de fișier unic
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${profile?.id}/${fileName}`;
-
-      // Ștergem avatarul vechi dacă există
-      if (profile?.avatar_url) {
-        try {
-          const oldPath = profile.avatar_url.split('/').pop();
-          if (oldPath) {
-            await supabase.storage
-              .from('avatars')
-              .remove([`${profile.id}/${oldPath}`]);
-          }
-        } catch (err) {
-          console.error('Error removing old avatar:', err);
-          // Continuăm chiar dacă ștergerea vechiului avatar eșuează
-        }
-      }
-
-      // Upload-ul noii imagini
-      const { data, error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, optimizedFile, {
-          cacheControl: '3600',
-          upsert: true // Schimbăm la true pentru a suprascrie dacă există
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Obținem URL-ul public
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(data.path);
-
-      setAvatarPreview(publicUrl);
-    } catch (err) {
-      console.error('Error uploading avatar:', err);
-      setError(`Eroare la încărcarea imaginii: ${err instanceof Error ? err.message : 'Eroare necunoscută'}`);
-    } finally {
-      setIsUploading(false);
-    }
-  }
-
-  async function handleSubmit(formData: FormData) {
-    if (avatarPreview) {
-      formData.set('avatar_url', avatarPreview);
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    formData.set("username", username);
+    formData.set("full_name", fullName);
+    formData.set("avatar_url", avatarUrl);
 
     const result = await updateProfile(formData);
-
-    if (result && result.error) {
-      setError(result.error);
+    
+    if (result?.error) {
+      alert(result.error);
       return;
+    }
+
+    router.refresh();
+
+    const { error } = await supabase.auth.updateUser({
+      data: { is_host: true }
+    });
+
+    if (error) {
+      console.error('Eroare la actualizarea metadatelor:', error.message);
+    }
+  };
+
+  async function handleFileUpload(file: File) {
+    console.log('Început upload pentru:', file.name)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const response = await fetch(`/api/upload`, {
+        method: 'POST',
+        body: formData
+      })
+
+      console.log('Răspuns API:', response.status)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Eroare necunoscută')
+      }
+
+      const data = await response.json()
+      console.log('URL primit:', data.secure_url)
+      return data.secure_url
+    } catch (error) {
+      console.error('Eroare upload:', error)
+      throw error
     }
   }
 
@@ -109,74 +86,74 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
         <DialogTitle>Editează Profilul</DialogTitle>
       </DialogHeader>
 
-      <form action={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
-          {/* Avatar upload */}
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative">
-              {avatarPreview ? (
-                <img
-                  src={avatarPreview}
-                  alt="Avatar preview"
-                  className="w-24 h-24 rounded-full object-cover"
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={avatarUrl || ''} />
+              <AvatarFallback>
+                {profile?.username?.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex-1 space-y-2">
+              <div className="space-y-2">
+                <Label>Încarcă o imagine de profil</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      try {
+                        const url = await handleFileUpload(file)
+                        setAvatarUrl(url)
+                        toast.success('Imagine încărcată cu succes!')
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : 'Eroare la încărcare')
+                      }
+                    }
+                  }}
                 />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center">
-                  <ImagePlus className="w-8 h-8 text-muted-foreground" />
-                </div>
-              )}
-              <Input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                id="avatar-upload"
-                onChange={handleAvatarChange}
-                disabled={isUploading}
-              />
-              <Label
-                htmlFor="avatar-upload"
-                className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:bg-primary/90"
-              >
-                <ImagePlus className="w-4 h-4" />
-              </Label>
+                <p className="text-sm text-muted-foreground">
+                  Formate acceptate: JPG, JPEG, PNG, WEBP (max. 5MB)
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Imaginea trebuie să fie mai mică de 5MB. Imaginile mari vor fi comprimate automat.
-            </p>
           </div>
 
-          {/* Restul câmpurilor rămân neschimbate */}
           <div className="space-y-2">
-            <Label htmlFor="username">Echipa</Label>
+            <Label htmlFor="username">Nume utilizator</Label>
             <Input
               id="username"
-              name="username"
-              defaultValue={profile?.username || ""}
-              placeholder="Numele echipei tale"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="full_name">Leader</Label>
+            <Label htmlFor="full_name">Nume complet</Label>
             <Input
               id="full_name"
-              name="full_name"
-              defaultValue={profile?.full_name || ""}
-              placeholder="Numele leader-ului echipei"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
             />
           </div>
-
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
-
-          <div className="flex justify-end gap-2">
-            <Button type="submit" disabled={isUploading}>
-              {isUploading ? 'Se încarcă...' : 'Salvează modificările'}
-            </Button>
-          </div>
         </div>
+
+        <SubmitButton />
       </form>
     </DialogContent>
+  );
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? "Se salvează..." : "Salvează modificările"}
+    </Button>
   );
 } 

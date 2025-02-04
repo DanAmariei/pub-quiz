@@ -1,6 +1,6 @@
 {
-  "name": "Next Level UI",
-  "short_name": "NLU",
+  "name": "Quiz App",
+  "short_name": "Quiz",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

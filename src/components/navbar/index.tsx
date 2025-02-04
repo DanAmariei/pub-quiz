@@ -54,13 +54,6 @@ const Navbar = async () => {
           >
             Turnee
           </Link>
-          <Link 
-            href="/links" 
-            className="text-sm font-medium transition-colors hover:text-primary"
-            aria-label="Navigare către pagina de linkuri"
-          >
-            Link-uri
-          </Link>
         </nav>
 
         <div className="flex items-center gap-3">
