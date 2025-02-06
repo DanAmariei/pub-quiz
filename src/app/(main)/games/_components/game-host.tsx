@@ -10,31 +10,13 @@ import { cn } from "@/lib/utils"
 import QuestionDisplay from "./question-display"
 import GameHeader from "./game-header"
 import GameAnswers from "./game-answers"
-
-interface Question {
-  id: string
-  question: string
-  correct_answer: string
-  incorrect_answers: string[]
-}
+import type { Game } from '@/types/database'
+import type { Question } from '@/types/database'
 
 interface QuizQuestion {
   question: Question
   answers_order: string[]
   order: number
-}
-
-interface Game {
-  id: string
-  host_id: string
-  title: string
-  quiz: {
-    id: string
-    title: string
-    questions: QuizQuestion[]
-  }
-  active_question_id: string | null
-  is_finished: boolean
 }
 
 interface Ranking {

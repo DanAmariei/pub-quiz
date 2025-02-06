@@ -6,13 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { formatDate } from "@/lib/utils"
 import Link from "next/link"
-
-interface Game {
-  id: string
-  created_at: string
-  host: { name: string }
-  quiz: { title: string }
-}
+import type { Game } from '@/types/database'
 
 export default function RealTimeGames({ initialGames }: { initialGames: Game[] }) {
   const [games, setGames] = useState(initialGames)

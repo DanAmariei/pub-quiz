@@ -18,18 +18,7 @@ import Link from "next/link"
 import { Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { deleteGame } from "../../_actions"
-
-interface Game {
-  id: string
-  title: string
-  created_at: string
-  is_finished: boolean
-  role: 'host' | 'participant'
-  quiz: {
-    title: string
-    description: string
-  }
-}
+import type { Game } from '@/types/database'
 
 export default function MyGamesClient({ initialGames }: { initialGames: Game[] }) {
   const [games, setGames] = useState(initialGames)

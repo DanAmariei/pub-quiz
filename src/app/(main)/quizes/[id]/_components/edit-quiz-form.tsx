@@ -18,29 +18,7 @@ import { Pencil, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { createClient } from "@/utils/supabase/client"
-
-interface Category {
-  id: string
-  name: string
-}
-
-interface Question {
-  id: string
-  question: string
-  correct_answer: string
-  incorrect_answers: string[]
-  category: Category
-  difficulty: 'easy' | 'medium' | 'hard'
-}
-
-interface Quiz {
-  id: string
-  title: string
-  description: string
-  questions: Array<{
-    question: Question
-  }>
-}
+import type { Category, Question, Quiz } from '@/types/database'
 
 export default function EditQuizForm({ 
   quiz,

@@ -9,20 +9,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { ro } from 'date-fns/locale'
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-
-interface Game {
-  id: string
-  created_at: string
-  is_finished: boolean
-  title: string
-  host: {
-    username: string
-  }
-  quiz: {
-    title: string
-    description: string
-  }
-}
+import type { Game } from '@/types/database'
 
 export default function GamesPage() {
   const [games, setGames] = useState<Game[]>([])

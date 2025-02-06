@@ -7,20 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import LoadingSpinner from "./loading-spinner"
-
-interface Question {
-  id: string
-  question: string
-  correct_answer: string
-  incorrect_answers: string[]
-  answers_order: string[]
-}
-
-interface UserAnswer {
-  question_id: string
-  answer: string
-  is_correct: boolean
-}
+import type { Question, UserAnswer } from '@/types/database'
 
 interface GameAnswersProps {
   gameId: string

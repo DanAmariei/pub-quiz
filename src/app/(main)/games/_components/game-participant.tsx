@@ -12,34 +12,11 @@ import GameRankings from "./game-rankings"
 import QuestionDisplay from "./question-display"
 import GameHeader from "./game-header"
 import GameAnswers from "./game-answers"
-
-interface Question {
-  id: string
-  question: string
-  correct_answer: string
-  incorrect_answers: string[]
-}
+import type { Game, UserAnswer, Question } from '@/types/database'
 
 interface QuizQuestion {
   question: Question
   answers_order: string[]
-}
-
-interface Game {
-  id: string
-  host_id: string
-  quiz_id: string
-  active_question_id: string | null
-  is_finished: boolean
-  title: string
-  quiz: {
-    id: string
-    title: string
-    questions: {
-      question: Question
-      answers_order: string[]
-    }[]
-  }
 }
 
 export default function GameParticipant({ 
