@@ -21,6 +21,7 @@ interface Question {
 interface QuizQuestion {
   question: Question
   answers_order: string[]
+  order: number
 }
 
 interface Game {
@@ -66,10 +67,11 @@ export default function GameHost({
   const [participants, setParticipants] = useState<Participant[]>([])
   const supabase = createClient()
 
-  // Procesăm întrebările pentru a fi mai ușor de folosit
-  const questions = game?.quiz?.questions?.map(q => q.question) || []
-  const activeQuestionIndex = questions.findIndex(q => q.id === game.active_question_id)
-  
+  // Găsim întrebarea activă
+  const activeQuestion = game.quiz.questions.find(
+    q => q.question.id === game.active_question_id
+  );
+
   // Funcție pentru a obține clasamentul
   const fetchRankings = async () => {
     const { data, error } = await supabase
@@ -132,6 +134,40 @@ export default function GameHost({
     // Fetch participants on mount
     fetchParticipants()
 
+    // Funcție pentru a reîncărca datele jocului
+    async function refreshGameData() {
+      const { data } = await supabase
+        .from('games')
+        .select(`
+          id,
+          host_id,
+          active_question_id,
+          is_finished,
+          title,
+          quiz:quizzes(
+            id,
+            title,
+            questions:quiz_questions(
+              question:questions(
+                id,
+                question,
+                correct_answer,
+                incorrect_answers
+              ),
+              answers_order,
+              order
+            )
+          )
+        `)
+        .eq('id', game.id)
+        .single()
+
+      if (data) {
+        setGame(data)
+      }
+    }
+
+    // Ascultăm schimbările în timp real
     const channel = supabase
       .channel(`game_${game.id}`)
       .on(
@@ -142,45 +178,7 @@ export default function GameHost({
           table: 'games',
           filter: `id=eq.${game.id}`
         },
-        async (payload) => {
-          console.log('Game updated:', payload)
-          
-          if (payload.eventType === 'UPDATE') {
-            const { data: updatedGame } = await supabase
-              .from('games')
-              .select<string, Game>(`
-                id,
-                host_id,
-                active_question_id,
-                is_finished,
-                quiz:quizzes!inner (
-                  id,
-                  title,
-                  questions:quiz_questions (
-                    question:questions (
-                      id,
-                      question,
-                      correct_answer,
-                      incorrect_answers
-                    ),
-                    answers_order
-                  )
-                )
-              `)
-              .eq('id', game.id)
-              .single()
-
-            if (updatedGame) {
-              console.log('Setting updated game:', updatedGame)
-              setGame(updatedGame)
-
-              // Fetch rankings if the game has just finished
-              if (updatedGame.is_finished) {
-                fetchRankings()
-              }
-            }
-          }
-        }
+        refreshGameData
       )
       .subscribe()
 
@@ -191,11 +189,20 @@ export default function GameHost({
   }, [game.id])
 
   async function handleNextQuestion() {
-    if (!questions.length) return
+    if (!game.quiz?.questions?.length) return
 
-    const nextIndex = activeQuestionIndex + 1
-    
-    if (nextIndex >= questions.length) {
+    const currentQuestion = game.quiz.questions.find(
+      q => q.question.id === game.active_question_id
+    );
+
+    let nextQuestion;
+    if (!currentQuestion) {
+      nextQuestion = game.quiz.questions.find(q => q.order === 0);
+    } else {
+      nextQuestion = game.quiz.questions.find(q => q.order === currentQuestion.order + 1);
+    }
+
+    if (!nextQuestion) {
       // Terminăm jocul
       const { data, error } = await supabase
         .from('games')
@@ -205,22 +212,24 @@ export default function GameHost({
           updated_at: new Date().toISOString()
         })
         .eq('id', game.id)
-        .select<string, Game>(`
+        .select(`
           id,
           host_id,
           active_question_id,
           is_finished,
-          quiz:quizzes!inner (
+          title,
+          quiz:quizzes(
             id,
             title,
-            questions:quiz_questions (
-              question:questions (
+            questions:quiz_questions(
+              question:questions(
                 id,
                 question,
                 correct_answer,
                 incorrect_answers
               ),
-              answers_order
+              answers_order,
+              order
             )
           )
         `)
@@ -238,58 +247,44 @@ export default function GameHost({
       return
     }
 
-    // Actualizăm întrebarea activă
-    const { data, error } = await supabase
-      .from('games')
-      .update({ 
-        active_question_id: questions[nextIndex].id,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', game.id)
-      .select<string, Game>(`
-        id,
-        host_id,
-        active_question_id,
-        is_finished,
-        quiz:quizzes!inner (
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .update({ 
+          active_question_id: nextQuestion.question.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', game.id)
+        .select(`
           id,
+          host_id,
+          active_question_id,
+          is_finished,
           title,
-          questions:quiz_questions (
-            question:questions (
-              id,
-              question,
-              correct_answer,
-              incorrect_answers
-            ),
-            answers_order
+          quiz:quizzes(
+            id,
+            title,
+            questions:quiz_questions(
+              question:questions(
+                id,
+                question,
+                correct_answer,
+                incorrect_answers
+              ),
+              answers_order,
+              order
+            )
           )
-        )
-      `)
-      .single()
+        `)
+        .single()
 
-    if (error) {
-      toast.error("Eroare la schimbarea întrebării")
-      return
-    }
+      if (error) throw error
 
-    if (data) {
+      // Actualizăm starea doar după ce avem datele complete
       setGame(data)
+    } catch (error) {
+      toast.error("Eroare la schimbarea întrebării")
     }
-  }
-
-  // Extrage toate răspunsurile pentru întrebarea curentă
-  const questionData = game.quiz.questions.find(
-    q => q.question.id === game.active_question_id
-  );
-
-  const allAnswers = questionData?.answers_order || 
-    (questionData?.question ? [
-      questionData.question.correct_answer,
-      ...questionData.question.incorrect_answers
-    ].sort(() => Math.random() - 0.5) : []);
-
-  if (!game?.quiz) {
-    return <div>Loading...</div>
   }
 
   return (
@@ -300,8 +295,8 @@ export default function GameHost({
             gameId={game.id}
             quizTitle={game.quiz.title}
             gameTitle={game.title}
-            currentQuestionNumber={activeQuestionIndex + 1}
-            totalQuestions={questions.length}
+            currentQuestionNumber={activeQuestion ? activeQuestion.order + 1 : 0}
+            totalQuestions={game.quiz.questions.length}
             isHost={true}
             isFinished={game.is_finished}
           />
@@ -312,19 +307,19 @@ export default function GameHost({
               size="sm"
               className="shrink-0 ml-4"
             >
-              {activeQuestionIndex === -1 ? "Start" : 
-               activeQuestionIndex === questions.length - 1 ? "Finalizează" : 
+              {!activeQuestion ? "Start" : 
+               activeQuestion.order === game.quiz.questions.length - 1 ? "Finalizează" : 
                "Următoarea Întrebare"}
             </Button>
           )}
         </div>
 
-        {game.active_question_id && questions[activeQuestionIndex] && (
+        {activeQuestion && (
           <QuestionDisplay
-            questionNumber={activeQuestionIndex + 1}
-            totalQuestions={questions.length}
-            question={questions[activeQuestionIndex].question}
-            answers={allAnswers}
+            questionNumber={activeQuestion.order + 1}
+            totalQuestions={game.quiz.questions.length}
+            question={activeQuestion.question.question}
+            answers={activeQuestion.answers_order}
             isInteractive={false}
           />
         )}
@@ -351,4 +346,4 @@ export default function GameHost({
       </div>
     </div>
   )
-} 
+}

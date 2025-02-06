@@ -34,7 +34,8 @@ export default async function GamePage({
             correct_answer,
             incorrect_answers
           ),
-          answers_order
+          answers_order,
+          order
         )
       )
     `)
@@ -44,6 +45,11 @@ export default async function GamePage({
   if (!game || error) {
     console.log('Game not found or error:', { id, error })
     notFound()
+  }
+
+  // Sortăm întrebările după order
+  if (game.quiz?.questions) {
+    game.quiz.questions = game.quiz.questions.sort((a, b) => a.order - b.order)
   }
 
   const isHost = game.host_id === user.id
