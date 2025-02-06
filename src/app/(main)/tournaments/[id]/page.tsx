@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { CalendarIcon, Users, Trophy } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { statusColors, statusLabels } from "@/lib/constants"
+import GameCard from "@/components/game-card"
 
 interface TournamentMatch {
   id: string
@@ -38,6 +39,16 @@ interface Tournament {
     }
   }>
   matches: TournamentMatch[]
+  games: Array<{
+    id: string
+    title: string
+    description: string
+    is_finished: boolean
+    host: {
+      id: string
+      name: string
+    }
+  }>
 }
 
 export default async function TournamentPage({
@@ -50,6 +61,7 @@ export default async function TournamentPage({
 
   const supabase = createClient()
   
+  // Mai întâi luăm datele despre turneu
   const { data: tournament, error } = await supabase
     .from('tournaments')
     .select(`
@@ -73,11 +85,46 @@ export default async function TournamentPage({
     notFound()
   }
 
-  const { data: playersCount } = await supabase
+  // Apoi luăm jocurile asociate turneului
+  const { data: games } = await supabase
     .from('games')
-    .select('participants:game_participants(count)', { count: 'exact' })
+    .select(`
+      id,
+      title,
+      is_finished,
+      created_at,
+      host:profiles!host_id(
+        id,
+        username,
+        avatar_url
+      ),
+      quiz:quizzes(
+        id,
+        title,
+        description
+      ),
+      participants:game_participants(count)
+    `)
     .eq('tournament_id', id)
+
+  // Luăm numărul de participanți
+  const { data: playersCount } = await supabase
+    .from('game_participants')
+    .select('id', { count: 'exact' })
+    .in('game_id', games?.map(g => g.id) || [])
     .single()
+
+  // Transformăm datele pentru a se potrivi cu interfața Game
+  const formattedGames = games?.map(game => ({
+    ...game,
+    host: {
+      name: game.host.username
+    },
+    quiz: {
+      ...game.quiz,
+      questions: []
+    }
+  })) || []
 
   return (
     <main className="container py-8">
@@ -132,6 +179,22 @@ export default async function TournamentPage({
               </div>
             </div>
           </Card>
+        </div>
+
+        <div className="grid gap-4 mt-8">
+          <h2 className="text-xl font-semibold">Jocuri în acest turneu</h2>
+          {formattedGames.map((game) => (
+            <GameCard 
+              key={game.id}
+              game={game}
+              showHost={true}
+            />
+          ))}
+          {formattedGames.length === 0 && (
+            <p className="text-muted-foreground text-center py-8">
+              Nu există jocuri în acest turneu.
+            </p>
+          )}
         </div>
       </div>
     </main>

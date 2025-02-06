@@ -41,14 +41,19 @@ export default function GamesPage() {
         .from('games')
         .select(`
           id,
+          title,
           created_at,
           is_finished,
-          title,
-          host:profiles!games_host_id_fkey(username),
+          host:profiles!host_id(
+            id,
+            username
+          ),
           quiz:quizzes(
+            id,
             title,
             description
-          )
+          ),
+          participants:game_participants(count)
         `)
         .eq('is_finished', false)
         .order('created_at', { ascending: false })

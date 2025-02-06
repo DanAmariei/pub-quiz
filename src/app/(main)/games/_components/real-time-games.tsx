@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { formatDate } from "@/lib/utils"
 import Link from "next/link"
 import type { Game } from '@/types/database'
+import GameCard from "@/components/game-card"
 
 export default function RealTimeGames({ initialGames }: { initialGames: Game[] }) {
   const [games, setGames] = useState(initialGames)
@@ -47,25 +48,11 @@ export default function RealTimeGames({ initialGames }: { initialGames: Game[] }
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {games.map((game) => (
-        <Card key={game.id}>
-          <CardHeader>
-            <CardTitle>{game.quiz.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                Host: {game.host.name}
-                <br />
-                Creat: {formatDate(game.created_at)}
-              </div>
-              <Button asChild className="w-full">
-                <Link href={`/games/${game.id}`}>
-                  Alătură-te
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <GameCard 
+          key={game.id}
+          game={game}
+          showHost={true}
+        />
       ))}
       {games.length === 0 && (
         <p className="text-muted-foreground col-span-full text-center py-8">
