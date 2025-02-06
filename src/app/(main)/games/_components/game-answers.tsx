@@ -53,7 +53,8 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
                   correct_answer,
                   incorrect_answers
                 ),
-                answers_order
+                answers_order,
+                order
               )
             )
           `)
@@ -61,17 +62,20 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
           .single()
 
         if (gameData?.quiz?.questions) {
-          const formattedQuestions = gameData.quiz.questions.map(q => ({
-            id: q.question.id,
-            question: q.question.question,
-            correct_answer: q.question.correct_answer,
-            incorrect_answers: q.question.incorrect_answers,
-            answers_order: q.answers_order || [
-              q.question.correct_answer,
-              ...q.question.incorrect_answers
-            ]
-          }))
-          setQuestions(formattedQuestions)
+          // Sortăm întrebările după order înainte de a le formata
+          const sortedQuestions = gameData.quiz.questions
+            .sort((a, b) => a.order - b.order)
+            .map(q => ({
+              id: q.question.id,
+              question: q.question.question,
+              correct_answer: q.question.correct_answer,
+              incorrect_answers: q.question.incorrect_answers,
+              answers_order: q.answers_order || [
+                q.question.correct_answer,
+                ...q.question.incorrect_answers
+              ]
+            }))
+          setQuestions(sortedQuestions)
         }
 
         // Obținem răspunsurile userului

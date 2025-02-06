@@ -22,6 +22,7 @@ export default async function EditQuizPage({
     .select(`
       *,
       questions:quiz_questions(
+        order,
         question:questions(
           *,
           category:categories(*)
@@ -33,6 +34,11 @@ export default async function EditQuizPage({
 
   if (!quiz) {
     notFound()
+  }
+
+  // Sortăm întrebările după order înainte de a le trimite la EditQuizForm
+  if (quiz.questions) {
+    quiz.questions = quiz.questions.sort((a, b) => a.order - b.order)
   }
 
   // Preluăm toate categoriile pentru dropdown
