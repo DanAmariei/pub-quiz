@@ -107,6 +107,49 @@ export default function GameHost({
     setParticipants(formattedParticipants || []);
   };
 
+  // Mutăm refreshGameData în afara useEffect
+  async function refreshGameData() {
+    const { data: updatedGame } = await supabase
+      .from('games')
+      .select(`
+        id,
+        host_id,
+        quiz_id,
+        active_question_id,
+        is_finished,
+        created_at,
+        title,
+        quiz:quizzes!inner(
+          id,
+          title,
+          questions:quiz_questions(
+            question:questions(
+              id,
+              question,
+              correct_answer,
+              incorrect_answers,
+              image,
+              song,
+              video
+            ),
+            answers_order,
+            order
+          )
+        )
+      `)
+      .eq('id', game.id)
+      .single()
+
+    if (updatedGame) {
+      // Sortăm întrebările după order
+      if (updatedGame.quiz?.questions) {
+        updatedGame.quiz.questions = updatedGame.quiz.questions.sort((a, b) => a.order - b.order)
+      }
+      
+      setGame(updatedGame)
+    }
+  }
+
   useEffect(() => {
     // Fetch rankings if the game is finished on mount
     if (game.is_finished) {
@@ -115,39 +158,6 @@ export default function GameHost({
 
     // Fetch participants on mount
     fetchParticipants()
-
-    // Funcție pentru a reîncărca datele jocului
-    async function refreshGameData() {
-      const { data } = await supabase
-        .from('games')
-        .select(`
-          id,
-          host_id,
-          active_question_id,
-          is_finished,
-          title,
-          quiz:quizzes(
-            id,
-            title,
-            questions:quiz_questions(
-              question:questions(
-                id,
-                question,
-                correct_answer,
-                incorrect_answers
-              ),
-              answers_order,
-              order
-            )
-          )
-        `)
-        .eq('id', game.id)
-        .single()
-
-      if (data) {
-        setGame(data)
-      }
-    }
 
     // Ascultăm schimbările în timp real
     const channel = supabase
@@ -160,7 +170,7 @@ export default function GameHost({
           table: 'games',
           filter: `id=eq.${game.id}`
         },
-        refreshGameData
+        refreshGameData  // Folosim funcția mutată în afară
       )
       .subscribe()
 
@@ -170,103 +180,44 @@ export default function GameHost({
     }
   }, [game.id])
 
-  async function handleNextQuestion() {
-    if (!game.quiz?.questions?.length) return
+  const handleNextQuestion = async () => {
+    const nextQuestion = game.quiz.questions.find(q => 
+      !activeQuestion ? q.order === 0 : q.order === activeQuestion.order + 1
+    )
 
-    const currentQuestion = game.quiz.questions.find(
-      q => q.question.id === game.active_question_id
-    );
+    if (!nextQuestion) return
 
-    let nextQuestion;
-    if (!currentQuestion) {
-      nextQuestion = game.quiz.questions.find(q => q.order === 0);
-    } else {
-      nextQuestion = game.quiz.questions.find(q => q.order === currentQuestion.order + 1);
-    }
+    const { error } = await supabase
+      .from('games')
+      .update({
+        active_question_id: nextQuestion.question.id,
+        is_finished: false
+      })
+      .eq('id', game.id)
 
-    if (!nextQuestion) {
-      // Terminăm jocul
-      const { data, error } = await supabase
-        .from('games')
-        .update({ 
-          is_finished: true,
-          active_question_id: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', game.id)
-        .select(`
-          id,
-          host_id,
-          active_question_id,
-          is_finished,
-          title,
-          quiz:quizzes(
-            id,
-            title,
-            questions:quiz_questions(
-              question:questions(
-                id,
-                question,
-                correct_answer,
-                incorrect_answers
-              ),
-              answers_order,
-              order
-            )
-          )
-        `)
-        .single()
-
-      if (error) {
-        toast.error("Eroare la finalizarea jocului")
-        return
-      }
-
-      if (data) {
-        setGame(data)
-        toast.success("Joc finalizat!")
-      }
+    if (error) {
+      toast.error("Eroare la actualizarea întrebării active")
       return
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('games')
-        .update({ 
-          active_question_id: nextQuestion.question.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', game.id)
-        .select(`
-          id,
-          host_id,
-          active_question_id,
-          is_finished,
-          title,
-          quiz:quizzes(
-            id,
-            title,
-            questions:quiz_questions(
-              question:questions(
-                id,
-                question,
-                correct_answer,
-                incorrect_answers
-              ),
-              answers_order,
-              order
-            )
-          )
-        `)
-        .single()
+    await refreshGameData()
+  }
 
-      if (error) throw error
+  const handleFinishGame = async () => {
+    const { error } = await supabase
+      .from('games')
+      .update({
+        is_finished: true,
+        active_question_id: null
+      })
+      .eq('id', game.id)
 
-      // Actualizăm starea doar după ce avem datele complete
-      setGame(data)
-    } catch (error) {
-      toast.error("Eroare la schimbarea întrebării")
+    if (error) {
+      toast.error("Eroare la finalizarea jocului")
+      return
     }
+
+    await refreshGameData()
   }
 
   return (
@@ -285,7 +236,9 @@ export default function GameHost({
 
           {!game.is_finished && (
             <Button 
-              onClick={handleNextQuestion}
+              onClick={activeQuestion?.order === game.quiz.questions.length - 1 
+                ? handleFinishGame 
+                : handleNextQuestion}
               size="sm"
               className="shrink-0 ml-4"
             >
@@ -298,11 +251,16 @@ export default function GameHost({
 
         {activeQuestion && (
           <QuestionDisplay
+            key={activeQuestion.question.id}
             questionNumber={activeQuestion.order + 1}
             totalQuestions={game.quiz.questions.length}
             question={activeQuestion.question.question}
             answers={activeQuestion.answers_order}
+            selectedAnswer=""
             isInteractive={false}
+            image={activeQuestion.question.image}
+            song={activeQuestion.question.song}
+            video={activeQuestion.question.video}
           />
         )}
 

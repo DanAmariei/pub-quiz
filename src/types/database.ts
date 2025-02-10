@@ -45,6 +45,9 @@ export interface Question {
   incorrect_answers: string[]
   category: Category
   difficulty: 'easy' | 'medium' | 'hard'
+  image?: string
+  song?: string
+  video?: string
 }
 
 export interface QuizQuestion {

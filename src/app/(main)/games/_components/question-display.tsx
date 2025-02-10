@@ -12,6 +12,9 @@ interface QuestionDisplayProps {
   selectedAnswer?: string
   onAnswerSelect?: (answer: string) => void
   isInteractive?: boolean
+  image?: string | null
+  song?: string | null
+  video?: string | null
 }
 
 // Array cu literele pentru variante
@@ -24,7 +27,10 @@ export default function QuestionDisplay({
   answers,
   selectedAnswer,
   onAnswerSelect,
-  isInteractive = false
+  isInteractive = false,
+  image,
+  song,
+  video
 }: QuestionDisplayProps) {
   return (
     <div className="space-y-4">
@@ -41,6 +47,38 @@ export default function QuestionDisplay({
           {questionNumber ? `Întrebarea ${questionNumber}` : 'Întrebare'}
         </h2>
         <p>{question}</p>
+
+        {image && (
+          <div className="mt-4 relative aspect-video w-full overflow-hidden rounded-lg">
+            <img
+              src={image}
+              alt="Question image"
+              className="object-cover w-full h-full"
+            />
+          </div>
+        )}
+
+        {song && (
+          <div className="mt-4 w-full">
+            <audio 
+              controls 
+              className="w-full"
+              key={`audio-${question}`}
+            >
+              <source src={song} type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        )}
+
+        {video && (
+          <div className="mt-4 relative aspect-video w-full overflow-hidden rounded-lg">
+            <video controls className="w-full">
+              <source src={video} type="video/mp4" />
+              Your browser does not support the video element.
+            </video>
+          </div>
+        )}
       </Card>
 
       <div 
@@ -54,17 +92,11 @@ export default function QuestionDisplay({
             onClick={() => isInteractive && onAnswerSelect?.(answer)}
             className={cn(
               "p-4 border rounded-lg transition-colors",
-              // Bază și border
               "border-gray-200 dark:border-gray-700",
-              // Stare normală
               "bg-white dark:bg-gray-800",
-              // Hover doar când e interactiv
               isInteractive && "hover:bg-green-50 dark:hover:bg-green-900/30",
-              // Cursor pointer doar când e interactiv
               isInteractive ? "cursor-pointer" : "cursor-default",
-              // Răspuns selectat
               selectedAnswer === answer && "bg-green-100 dark:bg-green-900 border-green-500",
-              // Disabled state (când nu e interactiv)
               !isInteractive && "opacity-80"
             )}
           >

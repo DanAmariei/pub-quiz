@@ -129,7 +129,7 @@ export default function GameParticipant({
   const reloadGameData = async () => {
     const { data: updatedGame, error } = await supabase
       .from('games')
-      .select<string, Game>(`
+      .select(`
         id,
         host_id,
         quiz_id,
@@ -137,15 +137,18 @@ export default function GameParticipant({
         is_finished,
         created_at,
         title,
-        quiz:quizzes!inner (
+        quiz:quizzes!inner(
           id,
           title,
-          questions:quiz_questions (
-            question:questions (
+          questions:quiz_questions(
+            question:questions(
               id,
               question,
               correct_answer,
-              incorrect_answers
+              incorrect_answers,
+              image,
+              song,
+              video
             ),
             answers_order,
             order
@@ -160,7 +163,22 @@ export default function GameParticipant({
       return
     }
 
-    console.log('Game data reloaded:', updatedGame)
+    // Sortăm întrebările
+    if (updatedGame.quiz?.questions) {
+      updatedGame.quiz.questions = updatedGame.quiz.questions.sort((a, b) => a.order - b.order)
+    }
+
+    // Actualizăm indexul și resetăm starea dacă s-a schimbat întrebarea activă
+    if (updatedGame.active_question_id !== game.active_question_id) {
+      const newActiveQuestion = updatedGame.quiz.questions.find(
+        q => q.question.id === updatedGame.active_question_id
+      )
+      setActiveQuestionIndex(newActiveQuestion?.order ?? 0)
+      setSelectedAnswer('')
+      setHasAnswered(false)
+      setShuffledAnswers([])
+    }
+
     setGame(updatedGame)
 
     if (updatedGame.is_finished) {
@@ -168,7 +186,7 @@ export default function GameParticipant({
     }
   }
 
-  // În efectul de realtime, când primim update
+  // În efectul de realtime
   useEffect(() => {
     const channel = supabase
       .channel(`game_${game.id}`)
@@ -184,21 +202,26 @@ export default function GameParticipant({
           if (payload.eventType === 'UPDATE') {
             const { data: updatedGame } = await supabase
               .from('games')
-              .select<string, Game>(`
+              .select(`
                 id,
                 host_id,
                 quiz_id,
                 active_question_id,
                 is_finished,
-                quiz:quizzes!inner (
+                created_at,
+                title,
+                quiz:quizzes!inner(
                   id,
                   title,
-                  questions:quiz_questions (
-                    question:questions (
+                  questions:quiz_questions(
+                    question:questions(
                       id,
                       question,
                       correct_answer,
-                      incorrect_answers
+                      incorrect_answers,
+                      image,
+                      song,
+                      video
                     ),
                     answers_order,
                     order
@@ -209,13 +232,16 @@ export default function GameParticipant({
               .single()
 
             if (updatedGame) {
-              // Găsim order-ul întrebării active noi
-              const newActiveQuestion = updatedGame.quiz.questions.find(
-                q => q.question.id === updatedGame.active_question_id
-              )
-              
+              // Sortăm întrebările
+              if (updatedGame.quiz?.questions) {
+                updatedGame.quiz.questions = updatedGame.quiz.questions.sort((a, b) => a.order - b.order)
+              }
+
               // Actualizăm indexul doar dacă s-a schimbat întrebarea activă
               if (updatedGame.active_question_id !== game.active_question_id) {
+                const newActiveQuestion = updatedGame.quiz.questions.find(
+                  q => q.question.id === updatedGame.active_question_id
+                )
                 setActiveQuestionIndex(newActiveQuestion?.order ?? 0)
                 
                 // Reset state pentru răspunsuri
@@ -384,6 +410,7 @@ export default function GameParticipant({
 
         {activeQuestion && (
           <QuestionDisplay
+            key={activeQuestion.id}
             questionNumber={activeQuestionIndex + 1}
             totalQuestions={game.quiz.questions.length}
             question={activeQuestion.question}
@@ -391,6 +418,9 @@ export default function GameParticipant({
             selectedAnswer={selectedAnswer}
             onAnswerSelect={setSelectedAnswer}
             isInteractive={!hasAnswered}
+            image={activeQuestion.image}
+            song={activeQuestion.song}
+            video={activeQuestion.video}
           />
         )}
 
