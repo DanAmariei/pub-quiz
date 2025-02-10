@@ -9,48 +9,6 @@ import { formatDate } from "@/lib/utils"
 import { statusColors, statusLabels } from "@/lib/constants"
 import GameCard from "@/components/game-card"
 
-interface TournamentMatch {
-  id: string
-  round: number
-  status: string
-  player1: {
-    id: string
-    username: string
-  }
-  player2: {
-    id: string
-    username: string
-  }
-  winner_id: string | null
-}
-
-interface Tournament {
-  id: string
-  name: string
-  description: string
-  start_date: string
-  stages: number
-  status: 'upcoming' | 'active' | 'completed'
-  participants: Array<{
-    id: string
-    profiles: {
-      username: string
-      avatar_url: string | null
-    }
-  }>
-  matches: TournamentMatch[]
-  games: Array<{
-    id: string
-    title: string
-    description: string
-    is_finished: boolean
-    host: {
-      id: string
-      name: string
-    }
-  }>
-}
-
 export default async function TournamentPage({
   params: { id }
 }: {
@@ -93,12 +51,12 @@ export default async function TournamentPage({
       title,
       is_finished,
       created_at,
+      host_id,
+      quiz_id,
       host:profiles!host_id(
-        id,
-        username,
-        avatar_url
+        username
       ),
-      quiz:quizzes(
+      quiz:quizzes!inner(
         id,
         title,
         description
@@ -108,23 +66,29 @@ export default async function TournamentPage({
     .eq('tournament_id', id)
 
   // Luăm numărul de participanți
-  const { data: playersCount } = await supabase
+  const { count: playersCount } = await supabase
     .from('game_participants')
-    .select('id', { count: 'exact' })
+    .select('*', { count: 'exact', head: true })
     .in('game_id', games?.map(g => g.id) || [])
-    .single()
 
   // Transformăm datele pentru a se potrivi cu interfața Game
   const formattedGames = games?.map(game => ({
     ...game,
+    host_id: game.host_id,
+    quiz_id: game.quiz_id,
+    active_question_id: null,
     host: {
-      name: game.host.username
+      name: game.host?.username
     },
     quiz: {
-      ...game.quiz,
+      id: game.quiz?.id,
+      title: game.quiz?.title,
+      description: game.quiz?.description,
       questions: []
     }
   })) || []
+
+  console.log(formattedGames)
 
   return (
     <main className="container py-8">
@@ -174,7 +138,7 @@ export default async function TournamentPage({
               <div>
                 <p className="text-sm font-medium">Participanți</p>
                 <p className="text-sm text-muted-foreground">
-                  {playersCount?.participants?.[0]?.count || 0} jucători
+                  {playersCount || 0} jucători
                 </p>
               </div>
             </div>

@@ -9,7 +9,7 @@ export default async function GamePage({
 }: {
   params: { id: string }
 }) {
-  const { user, profile } = await getProfile() || {}
+  const { user } = await getProfile() || {}
   if (!user) return null
 
   const supabase = createClient()
@@ -47,9 +47,15 @@ export default async function GamePage({
     notFound()
   }
 
-  // Sortăm întrebările după order
+  // După ce primim datele și înainte de a le trimite la componente
   if (game.quiz?.questions) {
+    // Sortăm întrebările
     game.quiz.questions = game.quiz.questions.sort((a, b) => a.order - b.order)
+    
+    // Adăugăm indexul întrebării active
+    game.activeQuestionIndex = game.quiz.questions.findIndex(
+      q => q.question.id === game.active_question_id
+    )
   }
 
   const isHost = game.host_id === user.id

@@ -36,6 +36,15 @@ export default function GameParticipant({
   const [rankings, setRankings] = useState<Ranking[]>([])
   const supabase = createClient()
 
+  // La începutul componentei, după useState-uri
+  const [activeQuestionIndex, setActiveQuestionIndex] = useState(() => {
+    // Găsim întrebarea activă și luăm order-ul ei
+    const activeQuestion = game.quiz.questions.find(
+      q => q.question.id === game.active_question_id
+    )
+    return activeQuestion?.order ?? 0
+  })
+
   // Găsim întrebarea activă și o definim o singură dată
   const activeQuestion = game.quiz.questions.find(
     q => q.question.id === game.active_question_id
@@ -138,7 +147,8 @@ export default function GameParticipant({
               correct_answer,
               incorrect_answers
             ),
-            answers_order
+            answers_order,
+            order
           )
         )
       `)
@@ -158,7 +168,7 @@ export default function GameParticipant({
     }
   }
 
-  // Ascultăm pentru modificări în joc
+  // În efectul de realtime, când primim update
   useEffect(() => {
     const channel = supabase
       .channel(`game_${game.id}`)
@@ -172,7 +182,6 @@ export default function GameParticipant({
         },
         async (payload) => {
           if (payload.eventType === 'UPDATE') {
-            // Actualizăm starea jocului când se modifică
             const { data: updatedGame } = await supabase
               .from('games')
               .select<string, Game>(`
@@ -191,7 +200,8 @@ export default function GameParticipant({
                       correct_answer,
                       incorrect_answers
                     ),
-                    answers_order
+                    answers_order,
+                    order
                   )
                 )
               `)
@@ -199,6 +209,21 @@ export default function GameParticipant({
               .single()
 
             if (updatedGame) {
+              // Găsim order-ul întrebării active noi
+              const newActiveQuestion = updatedGame.quiz.questions.find(
+                q => q.question.id === updatedGame.active_question_id
+              )
+              
+              // Actualizăm indexul doar dacă s-a schimbat întrebarea activă
+              if (updatedGame.active_question_id !== game.active_question_id) {
+                setActiveQuestionIndex(newActiveQuestion?.order ?? 0)
+                
+                // Reset state pentru răspunsuri
+                setSelectedAnswer('')
+                setHasAnswered(false)
+                setShuffledAnswers([])
+              }
+
               setGame(updatedGame)
             }
           }
@@ -275,11 +300,6 @@ export default function GameParticipant({
     setHasAnswered(true)
     toast.success("Răspuns trimis cu succes!")
   }
-
-  // Găsim indexul întrebării active
-  const activeQuestionIndex = game.quiz.questions.findIndex(
-    q => q.question.id === game.active_question_id
-  )
 
   if (!game?.quiz) {
     return <div>Loading...</div>

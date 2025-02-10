@@ -19,7 +19,13 @@ import { deleteGame } from "../../_actions"
 import type { Game } from '@/types/database'
 import GameCard from "@/components/game-card"
 
-export default function MyGamesClient({ initialGames }: { initialGames: Game[] }) {
+interface MyGamesClientProps {
+  initialGames: (Game & {
+    isHost: boolean
+  })[]
+}
+
+export default function MyGamesClient({ initialGames }: MyGamesClientProps) {
   const [games, setGames] = useState(initialGames)
   const [gameToDelete, setGameToDelete] = useState<string | null>(null)
 
@@ -49,7 +55,7 @@ export default function MyGamesClient({ initialGames }: { initialGames: Game[] }
           <GameCard 
             key={game.id}
             game={game}
-            showDelete={game.role === 'host'}
+            showDelete={true}
             onDelete={(id) => setGameToDelete(id)}
           />
         ))}

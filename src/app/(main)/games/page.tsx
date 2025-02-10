@@ -10,6 +10,11 @@ import { ro } from 'date-fns/locale'
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import type { Game } from '@/types/database'
+// import RealTimeGames from "@/components/real-time-games"
+// import { getProfile } from "@/utils/supabase/auth"
+import RealTimeGames from "./_components/real-time-games"
+import { getProfile } from "@/utils/get-profile"
+import GameCard from "@/components/game-card"
 
 export default function GamesPage() {
   const [games, setGames] = useState<Game[]>([])
@@ -59,6 +64,7 @@ export default function GamesPage() {
         .order('created_at', { ascending: false })
 
       if (data) {
+        console.log('Loaded games:', data) // Pentru debug
         setGames(data)
       }
     }
@@ -76,34 +82,9 @@ export default function GamesPage() {
           schema: 'public',
           table: 'games'
         },
-        async (payload) => {
-          if (payload.eventType === 'INSERT') {
-            const { data: newGame } = await supabase
-              .from('games')
-              .select(`
-                id,
-                created_at,
-                is_finished,
-                title,
-                host:profiles!games_host_id_fkey(username),
-                quiz:quizzes(
-                  title,
-                  description
-                )
-              `)
-              .eq('id', payload.new.id)
-              .single()
-
-            if (newGame && !newGame.is_finished) {
-              setGames(current => [newGame, ...current])
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            if (payload.new.is_finished) {
-              setGames(current => current.filter(game => game.id !== payload.new.id))
-            }
-          } else if (payload.eventType === 'DELETE') {
-            setGames(current => current.filter(game => game.id !== payload.old.id))
-          }
+        (payload) => {
+          console.log('Game change:', payload) // Pentru debug
+          fetchGames() // Reîncărcăm jocurile la orice modificare
         }
       )
       .subscribe()
@@ -133,40 +114,13 @@ export default function GamesPage() {
           )}
         </div>
 
-        <div className="flex flex-col gap-4 max-w-2xl mx-auto">
+        <div className="flex flex-col gap-4">
           {games.map((game) => (
-            <Link key={game.id} href={`/games/${game.id}`}>
-              <Card className="p-4 hover:bg-accent transition-colors cursor-pointer w-full">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h2 className="font-semibold">{game.title || game.quiz.title}</h2>
-                    {game.title && (
-                      <p className="text-sm text-muted-foreground">
-                        Quiz: {game.quiz.title}
-                      </p>
-                    )}
-                  </div>
-                  <Badge>
-                    Gazdă: {game.host.username}
-                  </Badge>
-                </div>
-                
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                  {game.quiz.description}
-                </p>
-                
-                <div className="flex justify-between items-center text-sm text-muted-foreground">
-                  <Badge variant="outline">
-                    {game.is_finished ? 'Finalizat' : 'În desfășurare'}
-                  </Badge>
-                  <span>
-                    {formatDistanceToNow(new Date(game.created_at), { 
-                      addSuffix: true,
-                      locale: ro 
-                    })}
-                  </span>
-                </div>
-              </Card>
+            <Link key={game.id} href={`/games/${game.id}`} className="w-full">
+              <GameCard 
+                game={game}
+                showHost={true}
+              />
             </Link>
           ))}
 

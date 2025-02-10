@@ -20,56 +20,73 @@ async function getGames() {
 
   const supabase = createClient()
 
-  // Obținem jocurile găzduite
-  const { data: hostedGames } = await supabase
+  // Jocurile găzduite
+  const { data: hostedGames, error: hostedError } = await supabase
     .from('games')
-    .select<string, GameWithQuiz>(`
+    .select(`
       id,
-      created_at,
-      is_finished,
       title,
-      quiz:quizzes!inner (
+      is_finished,
+      created_at,
+      host_id,
+      quiz_id,
+      host:profiles!host_id(
+        username
+      ),
+      quiz:quizzes!inner(
+        id,
         title,
         description
-      )
+      ),
+      participants:game_participants(count)
     `)
     .eq('host_id', user.id)
+    .order('created_at', { ascending: false })
 
-  // Obținem jocurile în care a participat
-  const { data: participatedGames } = await supabase
+  // Jocurile în care participă
+  const { data: participatedGames, error: participatedError } = await supabase
     .from('game_participants')
-    .select<string, GameWithQuiz>(`
-      game:games!inner (
+    .select(`
+      game:games!inner(
         id,
-        created_at,
-        is_finished,
         title,
-        quiz:quizzes!inner (
+        is_finished,
+        created_at,
+        host_id,
+        quiz_id,
+        host:profiles!host_id(
+          username
+        ),
+        quiz:quizzes!inner(
+          id,
           title,
           description
-        )
+        ),
+        participants:game_participants(count)
       )
     `)
     .eq('participant_id', user.id)
 
-  // Formatăm rezultatele
-  const hostedGamesList = (hostedGames || []).map(game => ({
+  if (hostedError) console.error('Error fetching hosted games:', hostedError)
+  if (participatedError) console.error('Error fetching participated games:', participatedError)
+
+  const hosted = hostedGames?.map(game => ({
     ...game,
-    role: 'host' as const
-  }))
+    isHost: true
+  })) || []
 
-  const participatedGamesList = (participatedGames || []).map((participant) => ({
-    id: participant.game.id,
-    created_at: participant.game.created_at,
-    is_finished: participant.game.is_finished,
-    title: participant.game.title,
-    quiz: participant.game.quiz,
-    role: 'participant' as const
-  }))
+  const participated = participatedGames?.map(({ game }) => ({
+    ...game,
+    isHost: false
+  })) || []
 
-  // Combinăm și sortăm toate jocurile
-  return [...hostedGamesList, ...participatedGamesList]
+  // Combinăm și sortăm
+  const allGames = [...hosted, ...participated]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+  console.log('All games:', allGames)
+
+  return allGames
 }
 
 export default async function MyGamesPage() {
