@@ -94,7 +94,9 @@ export default function QuestionDisplay({
               "p-4 border rounded-lg transition-colors",
               "border-gray-200 dark:border-gray-700",
               "bg-white dark:bg-gray-800",
-              isInteractive && "hover:bg-green-50 dark:hover:bg-green-900/30",
+              "border-gray-200 dark:border-gray-700",
+              // Toate stările folosesc exact aceeași culoare
+              isInteractive && "hover:bg-green-100 dark:hover:bg-green-900",
               isInteractive ? "cursor-pointer" : "cursor-default",
               selectedAnswer === answer && "bg-green-100 dark:bg-green-900 border-green-500",
               !isInteractive && "opacity-80"

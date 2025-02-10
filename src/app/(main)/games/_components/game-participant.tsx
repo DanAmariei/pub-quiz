@@ -13,6 +13,7 @@ import QuestionDisplay from "./question-display"
 import GameHeader from "./game-header"
 import GameAnswers from "./game-answers"
 import type { Game, UserAnswer, Question } from '@/types/database'
+import LoadingSpinner from "./loading-spinner"
 
 interface QuizQuestion {
   question: Question
@@ -34,6 +35,7 @@ export default function GameParticipant({
   const [hasAnswered, setHasAnswered] = useState(false)
   const [shuffledAnswers, setShuffledAnswers] = useState<string[]>([])
   const [rankings, setRankings] = useState<Ranking[]>([])
+  const [isLoadingAnswers, setIsLoadingAnswers] = useState(true)
   const supabase = createClient()
 
   // La începutul componentei, după useState-uri
@@ -84,6 +86,8 @@ export default function GameParticipant({
   // Modificăm useEffect-ul pentru answers_order să nu mai gestioneze starea răspunsului
   useEffect(() => {
     if (activeQuestion) {
+      setIsLoadingAnswers(true) // Începem loading
+      
       const questionData = game.quiz.questions.find(
         q => q.question.id === game.active_question_id
       );
@@ -97,6 +101,8 @@ export default function GameParticipant({
         ].sort(() => Math.random() - 0.5);
         setShuffledAnswers(answers);
       }
+      
+      setIsLoadingAnswers(false) // Terminăm loading
     }
   }, [activeQuestion?.id, game.active_question_id]);
 
@@ -409,29 +415,37 @@ export default function GameParticipant({
         />
 
         {activeQuestion && (
-          <QuestionDisplay
-            key={activeQuestion.id}
-            questionNumber={activeQuestionIndex + 1}
-            totalQuestions={game.quiz.questions.length}
-            question={activeQuestion.question}
-            answers={shuffledAnswers}
-            selectedAnswer={selectedAnswer}
-            onAnswerSelect={setSelectedAnswer}
-            isInteractive={!hasAnswered}
-            image={activeQuestion.image}
-            song={activeQuestion.song}
-            video={activeQuestion.video}
-          />
-        )}
+          <>
+            <QuestionDisplay
+              key={activeQuestion.id}
+              questionNumber={activeQuestionIndex + 1}
+              totalQuestions={game.quiz.questions.length}
+              question={activeQuestion.question}
+              answers={isLoadingAnswers ? [] : shuffledAnswers}
+              selectedAnswer={selectedAnswer}
+              onAnswerSelect={setSelectedAnswer}
+              isInteractive={!hasAnswered}
+              image={activeQuestion.image}
+              song={activeQuestion.song}
+              video={activeQuestion.video}
+            />
 
-        {activeQuestion && !hasAnswered && (
-          <Button
-            onClick={handleSubmitAnswer}
-            disabled={!selectedAnswer}
-            className="ml-auto"
-          >
-            Trimite Răspunsul
-          </Button>
+            {isLoadingAnswers ? (
+              <div className="flex justify-center">
+                <LoadingSpinner />
+              </div>
+            ) : (
+              !hasAnswered && (
+                <Button
+                  onClick={handleSubmitAnswer}
+                  disabled={!selectedAnswer}
+                  className="ml-auto"
+                >
+                  Trimite Răspunsul
+                </Button>
+              )
+            )}
+          </>
         )}
 
         {game.is_finished && (

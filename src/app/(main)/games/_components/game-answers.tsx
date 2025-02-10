@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Check } from "lucide-react"
+import { Check, CheckCircle2, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import LoadingSpinner from "./loading-spinner"
 import type { Question, UserAnswer } from '@/types/database'
@@ -38,7 +38,10 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
                   id,
                   question,
                   correct_answer,
-                  incorrect_answers
+                  incorrect_answers,
+                  image,
+                  song,
+                  video
                 ),
                 answers_order,
                 order
@@ -60,7 +63,10 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
               answers_order: q.answers_order || [
                 q.question.correct_answer,
                 ...q.question.incorrect_answers
-              ]
+              ],
+              image: q.question.image,
+              song: q.question.song,
+              video: q.question.video
             }))
           setQuestions(sortedQuestions)
         }
@@ -68,7 +74,20 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
         // Obținem răspunsurile userului
         const { data: answers } = await supabase
           .from('participant_answers')
-          .select('question_id, answer, is_correct')
+          .select(`
+            id,
+            answer,
+            is_correct,
+            question:questions(
+              id,
+              question,
+              correct_answer,
+              incorrect_answers,
+              image,
+              song,
+              video
+            )
+          `)
           .eq('game_id', gameId)
           .eq('participant_id', userId)
 
@@ -83,6 +102,8 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
     fetchData()
   }, [gameId, userId])
 
+  console.log(userAnswers)
+
   return (
     <Card className={cn("p-6", className)}>
       <h3 className="text-lg font-semibold mb-6">
@@ -93,7 +114,7 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
       ) : (
         <div className="space-y-8">
           {questions.map((question, qIndex) => {
-            const userAnswer = !isHost ? userAnswers.find(a => a.question_id === question.id) : null
+            const userAnswer = !isHost ? userAnswers.find(a => a.question.id === question.id) : null
             
             return (
               <div key={question.id} className="space-y-4">
@@ -102,6 +123,38 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
                     Întrebarea {qIndex + 1}: {question.question}
                   </h4>
                 </div>
+
+                {question.image && (
+                  <div className="relative aspect-video w-full overflow-hidden rounded-lg mt-4">
+                    <img
+                      src={question.image}
+                      alt="Question image"
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                )}
+
+                {question.song && (
+                  <div className="w-full mt-4">
+                    <audio 
+                      controls 
+                      className="w-full"
+                      key={`audio-${question.id}`}
+                    >
+                      <source src={question.song} type="audio/mpeg" />
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+                )}
+
+                {question.video && (
+                  <div className="relative aspect-video w-full overflow-hidden rounded-lg mt-4">
+                    <video controls className="w-full">
+                      <source src={question.video} type="video/mp4" />
+                      Your browser does not support the video element.
+                    </video>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {question.answers_order.map((answer, index) => {
@@ -143,6 +196,7 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
                     )
                   })}
                 </div>
+
               </div>
             )
           })}
