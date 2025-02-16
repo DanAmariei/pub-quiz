@@ -100,11 +100,10 @@ export default function Navbar() {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Contul meu</DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="cursor-pointer">
-                      Profil
+                    <Link href="/account" className="cursor-pointer">
+                      Contul meu
                     </Link>
                   </DropdownMenuItem>
 
@@ -144,7 +143,7 @@ export default function Navbar() {
                   )}
 
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="p-0" asChild>
+                  <DropdownMenuItem className="p-0 mt-16" asChild>
                     <form action={signOut}>
                       <Button
                         size="sm"

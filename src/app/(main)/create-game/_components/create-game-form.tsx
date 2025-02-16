@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Check, ChevronsUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -11,6 +12,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { createGame } from "@/app/(main)/_actions"
 import type { Quiz, Tournament } from "@/types/database"
@@ -25,6 +40,7 @@ export default function CreateGameForm({ quizzes, tournaments }: CreateGameFormP
   const [selectedQuiz, setSelectedQuiz] = useState("")
   const [selectedTournament, setSelectedTournament] = useState("none")
   const [isLoading, setIsLoading] = useState(false)
+  const [quizOpen, setQuizOpen] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +50,11 @@ export default function CreateGameForm({ quizzes, tournaments }: CreateGameFormP
     const formData = new FormData()
     formData.set('name', title)
     formData.set('quiz_id', selectedQuiz)
-    formData.set('tournament_id', selectedTournament === 'none' ? null : selectedTournament)
+    
+    // Adăugăm tournament_id doar dacă este selectat un turneu
+    if (selectedTournament !== 'none') {
+      formData.set('tournament_id', selectedTournament)
+    }
 
     const result = await createGame(formData)
     setIsLoading(false)
@@ -65,25 +85,54 @@ export default function CreateGameForm({ quizzes, tournaments }: CreateGameFormP
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="quiz" className="text-sm font-medium">
+          <label className="text-sm font-medium">
             Quiz
           </label>
-          <Select
-            value={selectedQuiz}
-            onValueChange={setSelectedQuiz}
-            required
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selectează un quiz" />
-            </SelectTrigger>
-            <SelectContent>
-              {quizzes.map((quiz) => (
-                <SelectItem key={quiz.id} value={quiz.id}>
-                  {quiz.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={quizOpen} onOpenChange={setQuizOpen}>
+            <div className="relative w-full">
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={quizOpen}
+                  className="w-full justify-between rounded-md"
+                >
+                  {selectedQuiz
+                    ? quizzes.find((quiz) => quiz.id === selectedQuiz)?.title
+                    : "Selectează un quiz..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Caută quiz..." className="h-9" />
+                  <CommandList>
+                    <CommandEmpty>Nu am găsit niciun quiz.</CommandEmpty>
+                    <CommandGroup>
+                      {quizzes.map((quiz) => (
+                        <CommandItem
+                          key={quiz.id}
+                          value={quiz.title}
+                          onSelect={() => {
+                            setSelectedQuiz(quiz.id)
+                            setQuizOpen(false)
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedQuiz === quiz.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {quiz.title}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </div>
+          </Popover>
         </div>
 
         <div className="space-y-2">

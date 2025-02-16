@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useState } from "react"
 import { createTournament } from "../../_actions"
-import { CalendarIcon, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { toast } from "sonner"
 
 export default function CreateTournamentForm() {
@@ -63,34 +63,6 @@ export default function CreateTournamentForm() {
               placeholder="Descriere despre turneu, reguli, premii etc."
               required
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Data Început</Label>
-              <div className="relative">
-                <Input
-                  id="start_date"
-                  name="start_date"
-                  type="datetime-local"
-                  required
-                />
-                <CalendarIcon className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="stages">Număr Etape</Label>
-              <Input
-                id="stages"
-                name="stages"
-                type="number"
-                min="1"
-                max="10"
-                placeholder="ex: 3"
-                required
-              />
-            </div>
           </div>
 
           <div className="flex justify-end gap-2">
