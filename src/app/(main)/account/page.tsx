@@ -85,7 +85,7 @@ export default async function AccountPage() {
   }
 
   return (
-    <main className="flex-1 container py-8 flex justify-center">
+    <main className="flex-1">
       <div className="flex flex-col gap-6 w-full max-w-2xl">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">Contul Meu</h1>
@@ -110,16 +110,18 @@ export default async function AccountPage() {
                 </p>
               </div>
             </div>
-            <Dialog>
+            
+          </div>
+
+          <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="mb-4">
                   <Pencil className="w-4 h-4 mr-2" />
                   Editează
                 </Button>
               </DialogTrigger>
               <EditProfileForm profile={profile} />
             </Dialog>
-          </div>
 
           <div className="space-y-6">
             {/* Informații profil */}
@@ -127,11 +129,6 @@ export default async function AccountPage() {
               <div>
                 <p className="text-sm text-muted-foreground">Echipa</p>
                 <p className="font-medium">{profile?.username || "Nesetat"}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-muted-foreground">Leader</p>
-                <p className="font-medium">{profile?.full_name || "Nesetat"}</p>
               </div>
             </div>
 
@@ -154,28 +151,6 @@ export default async function AccountPage() {
                       ? "Host" 
                       : "Utilizator"}
                 </p>
-              </div>
-            </div>
-
-            <div className="border-t pt-6">
-              <h3 className="text-sm font-medium mb-4">Statistici</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <p className="text-sm">
-                    <span className="font-medium text-foreground">{stats.hostedGames}</span> jocuri găzduite
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium text-foreground">{stats.participatedGames}</span> jocuri jucate
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm">
-                    <span className="font-medium text-foreground">{stats.hostedTournaments}</span> turnee găzduite
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium text-foreground">{stats.participatedTournaments}</span> turnee jucate
-                  </p>
-                </div>
               </div>
             </div>
           </div>

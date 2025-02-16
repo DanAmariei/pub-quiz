@@ -8,6 +8,7 @@ import { CalendarIcon, Users, Trophy } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { statusColors, statusLabels } from "@/lib/constants"
 import GameCard from "@/components/game-card"
+import TournamentRankings from "../_components/tournament-rankings"
 
 export default async function TournamentPage({
   params: { id }
@@ -117,49 +118,12 @@ export default async function TournamentPage({
               {tournament.description}
             </p>
           </div>
-          <Badge className={statusColors[tournament.status as keyof typeof statusColors]}>
-            {statusLabels[tournament.status as keyof typeof statusLabels]}
-          </Badge>
         </div>
-
-        {/* Info Cards */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Card className="p-4">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Data Începerii</p>
-                <p className="text-sm text-muted-foreground">
-                  {formatDate(tournament.start_date)}
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Etape</p>
-                <p className="text-sm text-muted-foreground">
-                  {tournament.stages} runde
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Participanți</p>
-                <p className="text-sm text-muted-foreground">
-                  {playersCount || 0} jucători
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div>
+        {/* Adăugăm clasamentul aici */}
+        <TournamentRankings 
+          tournamentId={tournament.id} 
+          className="mt-4"
+        />
 
         <div className="grid gap-4 mt-8">
           <h2 className="text-xl font-semibold">Jocuri în acest turneu</h2>

@@ -116,12 +116,12 @@ export default function GamesPage() {
 
         <div className="flex flex-col gap-4">
           {games.map((game) => (
-            <Link key={game.id} href={`/games/${game.id}`} className="w-full">
               <GameCard 
+              key={game.id}
                 game={game}
                 showHost={true}
               />
-            </Link>
+
           ))}
 
           {games.length === 0 && (

@@ -133,7 +133,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="full_name">Nume complet</Label>
+            <Label htmlFor="full_name">Nume echipă</Label>
             <Input
               id="full_name"
               value={fullName}
