@@ -81,7 +81,7 @@ export default function GameParticipant({
     }
 
     checkExistingAnswer()
-  }, [activeQuestion?.id, game.id, user.id])
+  }, [activeQuestion, activeQuestion?.id, game.id, supabase, user.id])
 
   // Modificăm useEffect-ul pentru answers_order să nu mai gestioneze starea răspunsului
   useEffect(() => {
@@ -104,7 +104,7 @@ export default function GameParticipant({
       
       setIsLoadingAnswers(false) // Terminăm loading
     }
-  }, [activeQuestion?.id, game.active_question_id]);
+  }, [activeQuestion, activeQuestion?.id, game.active_question_id, game.quiz.questions]);
 
   // Funcție pentru a obține clasamentul
   const fetchRankings = async () => {

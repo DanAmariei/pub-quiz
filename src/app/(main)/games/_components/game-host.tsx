@@ -178,7 +178,7 @@ export default function GameHost({
       console.log('Cleaning up subscription')
       supabase.removeChannel(channel)
     }
-  }, [game.id])
+  }, [fetchParticipants, fetchRankings, game.id, game.is_finished, refreshGameData, supabase])
 
   const handleNextQuestion = async () => {
     const nextQuestion = game.quiz.questions.find(q => 

@@ -114,7 +114,7 @@ export default function GameRankings({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [gameId])
+  }, [fetchRankings, gameId, supabase])
 
   return (
     <Card className={className}>

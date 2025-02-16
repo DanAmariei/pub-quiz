@@ -49,7 +49,7 @@ export default function DeleteCategoryButton({ id, name }: DeleteCategoryButtonP
             Șterge categoria
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Ești sigur că vrei să ștergi categoria "{name}"?
+            Ești sigur că vrei să ștergi categoria &quot;{name}&quot;?
             Această acțiune nu poate fi anulată.
           </AlertDialogDescription>
         </AlertDialogHeader>

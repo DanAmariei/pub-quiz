@@ -241,7 +241,7 @@ export default async function QuizesPage({
         {quizes?.length === 0 && (
           <div className="text-center py-6 text-muted-foreground">
             {searchQuery ? (
-              <p>Nu s-au găsit quiz-uri pentru căutarea "{searchQuery}"</p>
+              <p>Nu s-au găsit quiz-uri pentru căutarea &quot;{searchQuery}&quot;</p>
             ) : (
               <p>Nu există quiz-uri disponibile</p>
             )}

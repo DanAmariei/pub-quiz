@@ -100,7 +100,7 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
     }
 
     fetchData()
-  }, [gameId, userId])
+  }, [gameId, supabase, userId])
 
   console.log(userAnswers)
 
