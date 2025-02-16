@@ -43,10 +43,10 @@ export default function QuestionDisplay({
             {questionNumber}/{totalQuestions}
           </Badge>
         )}
-        <h2 className="text-xl font-semibold mb-4">
+        <p className="font-semibold mb-4">
           {questionNumber ? `Întrebarea ${questionNumber}` : 'Întrebare'}
-        </h2>
-        <p>{question}</p>
+        </p>
+        <h2 className="text-xl font-semibold mb-4">{question}</h2>
 
         {image && (
           <div className="mt-4 relative aspect-video w-full overflow-hidden rounded-lg">

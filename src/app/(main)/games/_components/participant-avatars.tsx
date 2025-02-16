@@ -16,7 +16,7 @@ interface ParticipantAvatarsProps {
 
 export default function ParticipantAvatars({ participants }: ParticipantAvatarsProps) {
   return (
-    <div className="flex -space-x-2 overflow-hidden">
+    <div className="flex -space-x-2 p-1 px-2 flex-wrap justify-center overflow-hidden">
       {participants.map((participant) => (
         <Avatar
           key={participant.id}
