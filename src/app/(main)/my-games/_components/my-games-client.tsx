@@ -45,7 +45,7 @@ export default function MyGamesClient({ initialGames }: MyGamesClientProps) {
   }
 
   return (
-    <div className="container py-8">
+    <div className="">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Jocurile Mele</h1>
       </div>

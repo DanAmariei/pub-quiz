@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useState } from "react"
-import { createClient } from "@/utils/supabase/client"
+import { getProfileClient } from "@/utils/get-profile-client"
 import { cn } from "@/utils/cn"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { ModeToggle } from "./mode-toggle"
 import { signOut } from "@/app/actions"
 import {
@@ -17,46 +17,38 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Lock, User } from "lucide-react"
+import type { Profile } from "@/types/database"
 
 export default function Navbar() {
-  const [user, setUser] = useState<any>(null)
-  const [isHost, setIsHost] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [username, setUsername] = useState("")
-  const [avatarUrl, setAvatarUrl] = useState("")
+  const [profile, setProfile] = useState<Profile | null>(null)
   const pathname = usePathname()
-  const supabase = createClient()
+  const router = useRouter()
 
   useEffect(() => {
-    async function getProfile() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUser(user)
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('username, avatar_url, is_host, is_admin')
-          .eq('id', user.id)
-          .single()
-
-        if (profile) {
-          setUsername(profile.username || user.email?.split('@')[0] || '')
-          setAvatarUrl(profile.avatar_url || '')
-          setIsHost(profile.is_host)
-          setIsAdmin(profile.is_admin)
-        }
+    async function loadProfile() {
+      const data = await getProfileClient()
+      if (data?.profile) {
+        setProfile(data.profile)
       }
     }
 
-    getProfile()
+    loadProfile()
   }, [])
 
   const links = [
     { href: "/", label: "Acasă" },
     { href: "/games", label: "Jocuri" },
     // Afișăm link-ul Quiz-uri doar pentru host sau admin
-    ...(isHost || isAdmin ? [{ href: "/quizes", label: "Quiz-uri" }] : []),
+    ...(profile?.is_host || profile?.is_admin ? [{ href: "/quizes", label: "Quiz-uri" }] : []),
     { href: "/tournaments", label: "Turnee" },
   ]
+
+  const handleSignOut = async () => {
+    await signOut()
+    setProfile(null)
+    router.push('/')
+    router.refresh()
+  }
 
   return (
     <header className="w-full">
@@ -80,19 +72,19 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          {user ? (
+          {profile ? (
             <>
               <span className="text-sm font-medium hidden sm:block">
-                {username}
+                {profile.username}
               </span>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="icon" variant="ghost">
-                    {avatarUrl ? (
+                    {profile.avatar_url ? (
                       <img
-                        src={avatarUrl}
-                        alt={username}
+                        src={profile.avatar_url}
+                        alt={profile.username || ''}
                         className="w-8 h-8 rounded-full"
                       />
                     ) : (
@@ -125,7 +117,7 @@ export default function Navbar() {
                     </Link>
                   </DropdownMenuItem>
 
-                  {isHost && (
+                  {profile.is_host && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
@@ -136,7 +128,7 @@ export default function Navbar() {
                     </>
                   )}
 
-                  {(isHost || isAdmin) && (
+                  {(profile.is_host || profile.is_admin) && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
@@ -144,7 +136,7 @@ export default function Navbar() {
                           Administrare Categorii
                         </Link>
                       </DropdownMenuItem>
-                      {isAdmin && (
+                      {profile.is_admin && (
                         <DropdownMenuItem asChild>
                           <Link href="/admin/import-quizzes" className="cursor-pointer">
                             Import Quiz-uri
@@ -156,7 +148,7 @@ export default function Navbar() {
 
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="p-0" asChild>
-                    <form action={signOut}>
+                    <form action={handleSignOut}>
                       <Button
                         size="sm"
                         variant="destructive"

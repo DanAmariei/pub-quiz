@@ -1,11 +1,10 @@
 'use client'
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Trash2 } from "lucide-react"
+import { Trash2, Users } from "lucide-react"
 import Link from "next/link"
-import { formatDate } from "@/lib/utils"
 import type { Game } from '@/types/database'
 
 interface GameCardProps {
@@ -51,38 +50,33 @@ export default function GameCard({
           </p>
         )}
         
-        <div className="flex justify-between items-center text-sm text-muted-foreground">
-          <div className="flex gap-2 items-center">
-            <Badge variant={game.is_finished ? 'outline' : 'default'}>
-              {game.is_finished ? 'Finalizat' : 'În desfășurare'}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Badge 
+              variant="secondary"
+              className={game.is_finished ? "bg-muted" : "bg-green-500/15 text-green-600 dark:text-green-400"}
+            >
+              {game.is_finished ? "Finalizat" : "În desfășurare"}
             </Badge>
-            {game.participants && (
-              <Badge variant="secondary">
-                {game.participants[0]?.count || 0}
-                {' '}
-                {game.participants[0]?.count === 1 ? 'participant' : 'participanți'}
-              </Badge>
-            )}
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              {game.participants?.[0]?.count || 0}
+            </Badge>
           </div>
 
-          <div className="flex gap-2 items-center">
-            {game.created_at && (
-              <span>Creat: {formatDate(game.created_at)}</span>
-            )}
-            {showDelete && game.isHost && onDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                onClick={(e) => {
-                  e.preventDefault()
-                  onDelete(game.id)
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+          {showDelete && game.isHost && onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              onClick={(e) => {
+                e.preventDefault()
+                onDelete(game.id)
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </Card>
     </Link>
