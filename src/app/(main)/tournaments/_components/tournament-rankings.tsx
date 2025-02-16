@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Medal } from "lucide-react"
 import LoadingSpinner from "@/app/(main)/games/_components/loading-spinner"
 
 interface TournamentRanking {
@@ -18,6 +19,19 @@ interface TournamentRankingsProps {
   tournamentId: string
   title?: string
   className?: string
+}
+
+const getMedalColor = (rank: number) => {
+  switch (rank) {
+    case 1:
+      return "text-yellow-500"
+    case 2:
+      return "text-gray-400"
+    case 3:
+      return "text-amber-700"
+    default:
+      return ""
+  }
 }
 
 export default function TournamentRankings({ 
@@ -124,8 +138,17 @@ export default function TournamentRankings({
                 className="flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-accent/50"
               >
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <div className="w-6 sm:w-8 text-center font-medium shrink-0">
-                    #{ranking.rank}
+                  <div className="w-6 sm:w-8 text-center font-medium shrink-0 flex items-center justify-center">
+                    {ranking.rank <= 3 ? (
+                      <div className="relative">
+                        <Medal className={`h-5 w-5 ${getMedalColor(ranking.rank)}`} />
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold">
+                          {ranking.rank}
+                        </span>
+                      </div>
+                    ) : (
+                      `#${ranking.rank}`
+                    )}
                   </div>
                   <Avatar className="h-6 w-6 sm:h-8 sm:w-8 shrink-0">
                     <AvatarImage
@@ -150,4 +173,4 @@ export default function TournamentRankings({
       </div>
     </Card>
   )
-} 
+}

@@ -50,8 +50,11 @@ export default function TournamentCard({ tournament, canDelete, userId }: Tourna
       <Link href={`/tournaments/${tournament.id}`}>
         <Card className="relative">
           <div className="p-6">
-            <div className="flex justify-between items-start mb-4">
+            <div className="mb-4">
               <h3 className="text-lg font-semibold">{tournament.name}</h3>
+              <p className="text-muted-foreground mb-4 line-clamp-3">
+              {tournament.description}
+            </p>
               <div className="flex items-center gap-2">
                 {tournament.host_username && (
                   <Badge variant="secondary" className="flex items-center gap-2">
@@ -88,9 +91,7 @@ export default function TournamentCard({ tournament, canDelete, userId }: Tourna
               </div>
             </div>
 
-            <p className="text-muted-foreground mb-4 line-clamp-3">
-              {tournament.description}
-            </p>
+
             
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <Badge variant="outline">
