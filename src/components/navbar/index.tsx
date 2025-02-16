@@ -55,7 +55,7 @@ export default function Navbar() {
     { href: "/games", label: "Jocuri" },
     // Afișăm link-ul Quiz-uri doar pentru host sau admin
     ...(isHost || isAdmin ? [{ href: "/quizes", label: "Quiz-uri" }] : []),
-    ...(isHost || isAdmin ? [{ href: "/tournaments", label: "Turnee" }] : []),
+    { href: "/tournaments", label: "Turnee" },
   ]
 
   return (
@@ -108,8 +108,20 @@ export default function Navbar() {
                   </DropdownMenuItem>
 
                   <DropdownMenuItem asChild>
+                    <Link href="/games" className="cursor-pointer">
+                      Jocuri
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
                     <Link href="/my-games" className="cursor-pointer">
                       Jocurile Mele
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link href="/tournaments" className="cursor-pointer">
+                      Turnee
                     </Link>
                   </DropdownMenuItem>
 
@@ -143,7 +155,7 @@ export default function Navbar() {
                   )}
 
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="p-0 mt-16" asChild>
+                  <DropdownMenuItem className="p-0" asChild>
                     <form action={signOut}>
                       <Button
                         size="sm"

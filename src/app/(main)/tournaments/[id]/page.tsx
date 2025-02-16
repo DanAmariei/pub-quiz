@@ -1,6 +1,6 @@
 import { getProfile } from "@/utils/get-profile"
 import { createClient } from "@/utils/supabase/server"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ export default async function TournamentPage({
 }: {
   params: { id: string }
 }) {
-  const { user } = await getProfile() || {}
+  const { user, profile } = await getProfile() || {}
   if (!user) return null
 
   const supabase = createClient()
@@ -33,14 +33,30 @@ export default async function TournamentPage({
     .eq('id', id)
     .single()
 
-  if (error) {
+  if (error || !tournament) {
     console.error('Error fetching tournament:', error)
     notFound()
   }
 
-  if (!tournament) {
-    console.log('Tournament not found:', id)
-    notFound()
+  // Verificăm dacă userul are acces la acest turneu
+  const canAccess = profile?.is_host || profile?.is_admin
+  
+  if (!canAccess) {
+    // Verificăm dacă userul a participat la vreun joc din acest turneu
+    const { data: participations } = await supabase
+      .from('games')
+      .select(`
+        id,
+        game_participants!inner(participant_id)
+      `)
+      .eq('tournament_id', id)
+      .eq('game_participants.participant_id', user.id)
+      .limit(1)
+
+    if (!participations?.length) {
+      // Userul nu a participat la niciun joc din acest turneu
+      redirect('/')
+    }
   }
 
   // Apoi luăm jocurile asociate turneului
@@ -91,7 +107,7 @@ export default async function TournamentPage({
   console.log(formattedGames)
 
   return (
-    <main className="container py-8">
+    <main className="">
       <div className="flex flex-col gap-8 max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-start">

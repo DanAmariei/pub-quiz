@@ -104,6 +104,11 @@ export interface Tournament {
   stages: number
   status: 'upcoming' | 'active' | 'completed'
   games_count?: number
+  number_of_participants?: number
+  number_of_games?: number
+  participant_ids?: string[]
+  host_username?: string | null;
+  host_avatar_url?: string | null;
   participants?: Array<{
     username: string
   }>

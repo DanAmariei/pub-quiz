@@ -25,11 +25,13 @@ import type { Tournament } from "@/types/database"
 interface TournamentCardProps {
   tournament: Tournament
   canDelete?: boolean
+  userId?: string
 }
 
-export default function TournamentCard({ tournament, canDelete }: TournamentCardProps) {
+export default function TournamentCard({ tournament, canDelete, userId }: TournamentCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const router = useRouter()
+  const isParticipant = userId && tournament.participant_ids?.includes(userId)
 
   const handleDelete = async () => {
     const result = await deleteTournament(tournament.id)
@@ -51,10 +53,25 @@ export default function TournamentCard({ tournament, canDelete }: TournamentCard
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-lg font-semibold">{tournament.name}</h3>
               <div className="flex items-center gap-2">
-                <Badge variant="secondary">
-                  {tournament.status === 'upcoming' ? 'Viitor' : 
-                   tournament.status === 'active' ? 'Activ' : 'Finalizat'}
-                </Badge>
+                {tournament.host_username && (
+                  <Badge variant="secondary" className="flex items-center gap-2">
+                    {tournament.host_avatar_url ? (
+                      <img 
+                        src={tournament.host_avatar_url} 
+                        alt={tournament.host_username}
+                        className="w-4 h-4 rounded-full"
+                      />
+                    ) : (
+                      <Users className="w-4 h-4" />
+                    )}
+                    {tournament.host_username}
+                  </Badge>
+                )}
+                {isParticipant && (
+                  <Badge variant="default" className="bg-green-500">
+                    Participant
+                  </Badge>
+                )}
                 {canDelete && (
                   <Button
                     variant="ghost"
@@ -76,16 +93,11 @@ export default function TournamentCard({ tournament, canDelete }: TournamentCard
             </p>
             
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <CalendarIcon className="w-4 h-4" />
-                {formatDate(tournament.start_date)}
-              </div>
-              <div className="flex items-center gap-1">
-                <Users className="w-4 h-4" />
-                {tournament.stages} etape
-              </div>
               <Badge variant="outline">
-                {tournament.games_count || 0} jocuri
+                {tournament.number_of_games || 0} jocuri
+              </Badge>
+              <Badge variant="outline">
+                {tournament.number_of_participants || 0} participanți
               </Badge>
             </div>
           </div>
