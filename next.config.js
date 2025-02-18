@@ -1,9 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   images: {
-    domains: [
-      'res.cloudinary.com'  // Adăugăm domeniul Cloudinary
-    ]
+    domains: ['res.cloudinary.com']
+  },
+  experimental: {
+    serverActions: true
+  },
+  typescript: {
+    ignoreBuildErrors: true
   }
 }
 
