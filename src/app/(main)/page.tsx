@@ -11,7 +11,6 @@ interface Tournament {
 }
 
 export default async function HomePage() {
-  const { profile } = await getProfile() || {}
 
   return (
     <main className="flex-1 container py-8">
