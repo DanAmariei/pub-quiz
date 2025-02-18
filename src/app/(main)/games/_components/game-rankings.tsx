@@ -22,6 +22,14 @@ interface GameRankingsProps {
   className?: string
 }
 
+interface ParticipantResponse {
+  participant_id: string
+  profiles: {
+    username: string
+    avatar_url: string | null
+  }
+}
+
 export default function GameRankings({ 
   gameId,
   title = "Clasament",
@@ -37,9 +45,9 @@ export default function GameRankings({
       // Mai întâi luăm toți participanții
       const { data: participants, error: participantsError } = await supabase
         .from('game_participants')
-        .select(`
+        .select<string, ParticipantResponse>(`
           participant_id,
-          profiles:participant_id (
+          profiles:participant_id!inner (
             username,
             avatar_url
           )
@@ -81,9 +89,14 @@ export default function GameRankings({
       const sortedRankings = combinedRankings
         .sort((a, b) => b.points - a.points)
         .map((ranking, index) => ({
-          ...ranking,
-          rank: index + 1
-        }))
+          participant_id: ranking.participant_id,
+          points: ranking.points,
+          rank: index + 1,
+          profiles: {
+            username: ranking.profiles.username || '',
+            avatar_url: ranking.profiles.avatar_url
+          }
+        } as Ranking))
 
       setRankings(sortedRankings)
     } finally {
@@ -114,7 +127,7 @@ export default function GameRankings({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [fetchRankings, gameId, supabase])
+  }, [])
 
   return (
     <Card className={className}>

@@ -110,8 +110,8 @@ export async function importQuizzes() {
         }
 
         status.success++
-      } catch (error) {
-        status.errors.push(`Quiz "${oldQuiz.title}": ${error.message}`)
+      } catch {
+        status.errors.push(`Quiz "${oldQuiz.title}"`)
       }
 
       status.processed++

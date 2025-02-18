@@ -13,12 +13,6 @@ import GameAnswers from "./game-answers"
 import type { Game } from '@/types/database'
 import type { Question } from '@/types/database'
 
-interface QuizQuestion {
-  question: Question
-  answers_order: string[]
-  order: number
-}
-
 interface Ranking {
   points: number
   rank: number
@@ -86,7 +80,6 @@ export default function GameHost({
       .select(`
         participant_id,
         profiles:participant_id (
-          id,
           username,
           avatar_url
         )
@@ -98,10 +91,12 @@ export default function GameHost({
       return;
     }
 
-    // Transformăm datele pentru a se potrivi cu interfața Participant
     const formattedParticipants = data?.map(p => ({
       id: p.participant_id,
-      profiles: p.profiles
+      profiles: {
+        username: p.profiles.username,
+        avatar_url: p.profiles.avatar_url
+      }
     }));
 
     setParticipants(formattedParticipants || []);
@@ -122,6 +117,7 @@ export default function GameHost({
         quiz:quizzes!inner(
           id,
           title,
+          description,
           questions:quiz_questions(
             question:questions(
               id,
@@ -142,11 +138,15 @@ export default function GameHost({
 
     if (updatedGame) {
       // Sortăm întrebările după order
-      if (updatedGame.quiz?.questions) {
-        updatedGame.quiz.questions = updatedGame.quiz.questions.sort((a, b) => a.order - b.order)
+      const formattedGame: Game = {
+        ...updatedGame,
+        quiz: {
+          ...updatedGame.quiz,
+          questions: updatedGame.quiz.questions.sort((a, b) => a.order - b.order)
+        }
       }
       
-      setGame(updatedGame)
+      setGame(formattedGame)
     }
   }
 
@@ -178,7 +178,7 @@ export default function GameHost({
       console.log('Cleaning up subscription')
       supabase.removeChannel(channel)
     }
-  }, [fetchParticipants, fetchRankings, game.id, game.is_finished, refreshGameData, supabase])
+  }, [])
 
   const handleNextQuestion = async () => {
     const nextQuestion = game.quiz.questions.find(q => 

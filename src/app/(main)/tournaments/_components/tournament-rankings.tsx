@@ -43,66 +43,65 @@ export default function TournamentRankings({
   const [isLoading, setIsLoading] = useState(true)
   const supabase = createClient()
 
-  const fetchRankings = async () => {
-    setIsLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('games')
-        .select(`
-          id,
-          game_rankings(
-            participant_id,
-            points,
-            profiles(
-              username,
-              avatar_url
-            )
-          )
-        `)
-        .eq('tournament_id', tournamentId)
-
-      if (error) {
-        console.error('Error fetching rankings:', error)
-        return
-      }
-
-      // Agregăm punctele pentru fiecare participant
-      const pointsByParticipant = data.reduce((acc: Record<string, TournamentRanking>, game) => {
-        game.game_rankings?.forEach(ranking => {
-          const participantId = ranking.participant_id
-          const profile = ranking.profiles
-          if (!acc[participantId]) {
-            acc[participantId] = {
-              participant_id: participantId,
-              username: profile.username,
-              avatar_url: profile.avatar_url,
-              total_points: 0,
-              rank: 0
-            }
-          }
-          acc[participantId].total_points += ranking.points
-        })
-        return acc
-      }, {})
-
-      // Convertim în array și sortăm după puncte
-      const sortedRankings = Object.values(pointsByParticipant)
-        .sort((a, b) => b.total_points - a.total_points)
-        .map((ranking, index) => ({
-          ...ranking,
-          rank: index + 1
-        }))
-
-      setRankings(sortedRankings)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   useEffect(() => {
+    const fetchRankings = async () => {
+      setIsLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('games')
+          .select(`
+            id,
+            game_rankings(
+              participant_id,
+              points,
+              profiles(
+                username,
+                avatar_url
+              )
+            )
+          `)
+          .eq('tournament_id', tournamentId)
+
+        if (error) {
+          console.error('Error fetching rankings:', error)
+          return
+        }
+
+        // Agregăm punctele pentru fiecare participant
+        const pointsByParticipant = data.reduce((acc: Record<string, TournamentRanking>, game) => {
+          game.game_rankings?.forEach(ranking => {
+            const participantId = ranking.participant_id
+            const profile = ranking.profiles
+            if (!acc[participantId]) {
+              acc[participantId] = {
+                participant_id: participantId,
+                username: profile.username,
+                avatar_url: profile.avatar_url,
+                total_points: 0,
+                rank: 0
+              }
+            }
+            acc[participantId].total_points += ranking.points
+          })
+          return acc
+        }, {})
+
+        const sortedRankings = Object.values(pointsByParticipant)
+          .sort((a, b) => b.total_points - a.total_points)
+          .map((ranking, index) => ({
+            ...ranking,
+            rank: index + 1
+          }))
+
+        setRankings(sortedRankings)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
     fetchRankings()
 
-    // Subscrie la modificări în game_rankings pentru jocurile din turneu
+    // Subscrie la modificări
     const channel = supabase
       .channel(`tournament_rankings_${tournamentId}`)
       .on(
@@ -122,7 +121,7 @@ export default function TournamentRankings({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [tournamentId])
+  }, [tournamentId, supabase])
 
   return (
     <Card className={className}>
