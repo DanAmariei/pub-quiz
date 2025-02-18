@@ -32,7 +32,7 @@ import type { Quiz, Tournament } from "@/types/database"
 
 interface CreateGameFormProps {
   quizzes: Quiz[]
-  tournaments: Tournament[]
+  tournaments: Partial<Tournament>[]
 }
 
 export default function CreateGameForm({ quizzes, tournaments }: CreateGameFormProps) {
@@ -149,7 +149,7 @@ export default function CreateGameForm({ quizzes, tournaments }: CreateGameFormP
             <SelectContent>
               <SelectItem value="none">Fără turneu</SelectItem>
               {tournaments.map((tournament) => (
-                <SelectItem key={tournament.id} value={tournament.id}>
+                <SelectItem key={tournament.id} value={tournament.id || ''}>
                   {tournament.name}
                 </SelectItem>
               ))}
