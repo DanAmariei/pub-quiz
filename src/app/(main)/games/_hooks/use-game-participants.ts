@@ -3,16 +3,17 @@
 import { useState, useEffect } from 'react'
 import { createClient } from "@/utils/supabase/client"
 
-interface Participant {
-  id: string
+interface ParticipantResponse {
+  participant_id: string
   profiles: {
+    id: string
     username: string
     avatar_url: string | null
   }
 }
 
 export function useGameParticipants(gameId: string) {
-  const [participants, setParticipants] = useState<Participant[]>([])
+  const [participants, setParticipants] = useState<ParticipantResponse[]>([])
 
   useEffect(() => {
     const supabase = createClient()
@@ -20,9 +21,9 @@ export function useGameParticipants(gameId: string) {
     const fetchParticipants = async () => {
       const { data, error } = await supabase
         .from('game_participants')
-        .select(`
+        .select<string, ParticipantResponse>(`
           participant_id,
-          profiles:participant_id (
+          profiles:participant_id!inner (
             id,
             username,
             avatar_url
@@ -36,8 +37,9 @@ export function useGameParticipants(gameId: string) {
       }
 
       const formattedParticipants = data?.map(p => ({
-        id: p.participant_id,
+        participant_id: p.participant_id,
         profiles: {
+          id: p.profiles.id,
           username: p.profiles.username,
           avatar_url: p.profiles.avatar_url
         }

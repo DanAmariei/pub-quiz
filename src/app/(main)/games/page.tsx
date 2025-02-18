@@ -16,6 +16,28 @@ import RealTimeGames from "./_components/real-time-games"
 import { getProfile } from "@/utils/get-profile"
 import GameCard from "@/components/game-card"
 
+interface GameResponse {
+  id: string
+  title: string
+  created_at: string
+  is_finished: boolean
+  host_id: string
+  quiz_id: string
+  active_question_id: string | null
+  host: {
+    id: string
+    username: string
+  }
+  quiz: {
+    id: string
+    title: string
+    description: string
+  }
+  participants: {
+    count: number
+  }[]
+}
+
 export default function GamesPage() {
   const [games, setGames] = useState<Game[]>([])
   const [isHost, setIsHost] = useState(false)
@@ -44,11 +66,14 @@ export default function GamesPage() {
     async function fetchGames() {
       const { data } = await supabase
         .from('games')
-        .select(`
+        .select<string, GameResponse>(`
           id,
           title,
           created_at,
           is_finished,
+          host_id,
+          quiz_id,
+          active_question_id,
           host:profiles!host_id(
             id,
             username
@@ -65,7 +90,7 @@ export default function GamesPage() {
 
       if (data) {
         console.log('Loaded games:', data) // Pentru debug
-        setGames(data)
+        setGames(data as unknown as Game[])
       }
     }
 

@@ -35,7 +35,10 @@ export default function EditQuizForm({
     setQuestions(prevQuestions => 
       prevQuestions.map(q => 
         q.question.id === questionId 
-          ? { question: { ...q.question, ...updates } }
+          ? { 
+              ...q,
+              question: { ...q.question, ...updates }
+            }
           : q
       )
     )
@@ -66,7 +69,7 @@ export default function EditQuizForm({
           question.incorrect_answers.forEach((answer, i) => {
             formData.append(`incorrect-${question.id}-${i}`, answer)
           })
-          formData.append(`difficulty-${question.id}`, question.difficulty)
+          formData.append(`difficulty-${question.id}`, question.difficulty || 'easy')
         })
 
         const result = await updateQuiz(quiz.id, formData)
@@ -103,7 +106,7 @@ export default function EditQuizForm({
         <Label>Categorie</Label>
         <Select 
           name="category" 
-          defaultValue={quiz.questions[0]?.question.category.id}
+          defaultValue={quiz.questions[0]?.question?.category?.id}
           required
         >
           <SelectTrigger>

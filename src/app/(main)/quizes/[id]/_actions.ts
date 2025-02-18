@@ -143,7 +143,7 @@ export async function updateQuestion(
     // 3. Actualizăm ordinea răspunsurilor în quiz_questions folosind aceeași ordine
     // dar cu noile valori ale răspunsurilor
     const oldAnswers = quizQuestion.answers_order
-    const updatedOrder = oldAnswers.map(oldAnswer => {
+    const updatedOrder = oldAnswers.map((oldAnswer: string) => {
       // Dacă răspunsul era cel corect, îl înlocuim cu noul răspuns corect
       const oldCorrectAnswer = oldAnswers[oldAnswers.indexOf(correctAnswer)]
       if (oldAnswer === oldCorrectAnswer) {

@@ -20,12 +20,41 @@ interface QuizQuestion {
   answers_order: string[]
 }
 
+export interface GameResponse {
+  id: string
+  host_id: string
+  quiz_id: string
+  active_question_id: string | null
+  activeQuestionIndex?: number
+  is_finished: boolean
+  created_at: string
+  title: string
+  quiz: {
+    id: string
+    title: string
+    description: string
+    questions: Array<{
+      question: {
+        id: string
+        question: string
+        correct_answer: string
+        incorrect_answers: string[]
+        image?: string
+        song?: string
+        video?: string
+      }
+      answers_order: string[]
+      order: number
+    }>
+  }
+}
+
 export default function GameParticipant({ 
   game: initialGame,
   user,
   isParticipant: initialIsParticipant
 }: { 
-  game: Game
+  game: GameResponse
   user: any
   isParticipant: boolean
 }) {
@@ -135,7 +164,7 @@ export default function GameParticipant({
   const reloadGameData = async () => {
     const { data: updatedGame, error } = await supabase
       .from('games')
-      .select(`
+      .select<string, GameResponse>(`
         id,
         host_id,
         quiz_id,
@@ -208,7 +237,7 @@ export default function GameParticipant({
           if (payload.eventType === 'UPDATE') {
             const { data: updatedGame } = await supabase
               .from('games')
-              .select(`
+              .select<string, GameResponse>(`
                 id,
                 host_id,
                 quiz_id,

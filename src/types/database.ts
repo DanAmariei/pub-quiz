@@ -43,11 +43,12 @@ export interface Question {
   question: string
   correct_answer: string
   incorrect_answers: string[]
-  category: Category
-  difficulty: 'easy' | 'medium' | 'hard'
+  category?: Category
+  difficulty?: 'easy' | 'medium' | 'hard'
   image?: string
   song?: string
   video?: string
+  answers_order?: string[]
 }
 
 export interface QuizQuestion {
@@ -81,9 +82,11 @@ export interface GameParticipant {
 }
 
 export interface UserAnswer {
-  question_id: string
-  answer: string
-  is_correct: boolean
+  id: string;
+  question_id?: string;
+  answer: string;
+  is_correct: boolean;
+  question: Question;
 }
 
 export interface Ranking {
@@ -119,8 +122,8 @@ export interface Tournament {
     created_at: string
     quiz: {
       name: string
-      category: string
-      difficulty: 'easy' | 'medium' | 'hard'
+      category?: string
+      difficulty?: 'easy' | 'medium' | 'hard'
     }
   }>
 } 

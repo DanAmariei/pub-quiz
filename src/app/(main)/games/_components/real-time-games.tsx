@@ -14,6 +14,26 @@ interface RealTimeGamesProps {
   isAdmin?: boolean
 }
 
+interface GameResponse {
+  id: string
+  title: string
+  is_finished: boolean
+  created_at: string
+  host_id: string
+  quiz_id: string
+  host: {
+    username: string
+  }
+  quiz: {
+    id: string
+    title: string
+    description: string
+  }
+  participants: {
+    count: number
+  }[]
+}
+
 export default function RealTimeGames({ initialGames, isHost, isAdmin }: RealTimeGamesProps) {
   const [games, setGames] = useState(initialGames)
   const supabase = createClient()
@@ -31,14 +51,14 @@ export default function RealTimeGames({ initialGames, isHost, isAdmin }: RealTim
         async (payload) => {
           const { data } = await supabase
             .from('games')
-            .select(`
+            .select<string, GameResponse>(`
               id,
               title,
               is_finished,
               created_at,
               host_id,
               quiz_id,
-              host:profiles!host_id(
+              host:profiles!host_id!inner(
                 username
               ),
               quiz:quizzes!inner(
@@ -58,12 +78,12 @@ export default function RealTimeGames({ initialGames, isHost, isAdmin }: RealTim
               quiz_id: game.quiz_id,
               active_question_id: null,
               host: {
-                name: game.host?.username
+                name: game.host.username
               },
               quiz: {
-                id: game.quiz?.id,
-                title: game.quiz?.title,
-                description: game.quiz?.description,
+                id: game.quiz.id,
+                title: game.quiz.title,
+                description: game.quiz.description,
                 questions: []
               }
             }))

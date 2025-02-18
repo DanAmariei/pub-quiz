@@ -10,22 +10,13 @@ import { cn } from "@/lib/utils"
 import QuestionDisplay from "./question-display"
 import GameHeader from "./game-header"
 import GameAnswers from "./game-answers"
-import type { Game } from '@/types/database'
-import type { Question } from '@/types/database'
+import type { Game, Question, Ranking } from '@/types/database'
+import { GameResponse } from "./game-participant"
 
-interface Ranking {
-  points: number
-  rank: number
+interface ParticipantResponse {
   participant_id: string
   profiles: {
-    username: string
-    avatar_url: string | null
-  }
-}
-
-interface Participant {
-  id: string
-  profiles: {
+    id?: string
     username: string
     avatar_url: string | null
   }
@@ -35,12 +26,12 @@ export default function GameHost({
   game: initialGame,
   user 
 }: { 
-  game: Game
+  game: GameResponse
   user: { id: string }
 }) {
   const [game, setGame] = useState(initialGame)
   const [rankings, setRankings] = useState<Ranking[]>([])
-  const [participants, setParticipants] = useState<Participant[]>([])
+  const [participants, setParticipants] = useState<ParticipantResponse[]>([])
   const supabase = createClient()
 
   // Găsim întrebarea activă
@@ -77,9 +68,10 @@ export default function GameHost({
   const fetchParticipants = async () => {
     const { data, error } = await supabase
       .from('game_participants')
-      .select(`
+      .select<string, ParticipantResponse>(`
         participant_id,
-        profiles:participant_id (
+        profiles:participant_id!inner (
+          id,
           username,
           avatar_url
         )
@@ -92,7 +84,7 @@ export default function GameHost({
     }
 
     const formattedParticipants = data?.map(p => ({
-      id: p.participant_id,
+      participant_id: p.participant_id,
       profiles: {
         username: p.profiles.username,
         avatar_url: p.profiles.avatar_url
@@ -106,7 +98,7 @@ export default function GameHost({
   async function refreshGameData() {
     const { data: updatedGame } = await supabase
       .from('games')
-      .select(`
+      .select<string, GameResponse>(`
         id,
         host_id,
         quiz_id,
@@ -138,7 +130,7 @@ export default function GameHost({
 
     if (updatedGame) {
       // Sortăm întrebările după order
-      const formattedGame: Game = {
+      const formattedGame: GameResponse = {
         ...updatedGame,
         quiz: {
           ...updatedGame.quiz,

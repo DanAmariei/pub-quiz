@@ -18,6 +18,16 @@ interface GameAnswersProps {
 
 const ANSWER_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
 
+interface QuizResponse {
+  quiz: {
+    questions: {
+      question: Question;
+      answers_order: string[];
+      order: number;
+    }[];
+  };
+}
+
 export default function GameAnswers({ gameId, userId, className, isHost }: GameAnswersProps) {
   const [questions, setQuestions] = useState<Question[]>([])
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([])
@@ -31,7 +41,7 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
         // Obținem toate întrebările din quiz
         const { data: gameData } = await supabase
           .from('games')
-          .select(`
+          .select<string, QuizResponse>(`
             quiz:quizzes (
               questions:quiz_questions (
                 question:questions (
@@ -60,25 +70,24 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
               question: q.question.question,
               correct_answer: q.question.correct_answer,
               incorrect_answers: q.question.incorrect_answers,
-              answers_order: q.answers_order || [
-                q.question.correct_answer,
-                ...q.question.incorrect_answers
-              ],
+              answers_order: q.answers_order,
               image: q.question.image,
               song: q.question.song,
-              video: q.question.video
-            }))
+              video: q.question.video,
+              category: q.question.category,
+              difficulty: q.question.difficulty
+            } as Question))
           setQuestions(sortedQuestions)
         }
 
         // Obținem răspunsurile userului
         const { data: answers } = await supabase
           .from('participant_answers')
-          .select(`
+          .select<string, UserAnswer>(`
             id,
             answer,
             is_correct,
-            question:questions(
+            question:questions!inner(
               id,
               question,
               correct_answer,
@@ -157,7 +166,7 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {question.answers_order.map((answer, index) => {
+                  {question.answers_order?.map((answer, index) => {
                     const isCorrect = answer === question.correct_answer
                     const isUserAnswer = !isHost && answer === userAnswer?.answer
                     

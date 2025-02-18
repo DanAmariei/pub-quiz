@@ -3,8 +3,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface Participant {
-  id: string
+  id?: string
+  participant_id?: string
   profiles: {
+    id?: string
     username: string
     avatar_url: string | null
   }

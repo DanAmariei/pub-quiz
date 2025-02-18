@@ -21,6 +21,20 @@ interface TournamentRankingsProps {
   className?: string
 }
 
+interface GameRanking {
+  participant_id: string
+  points: number
+  profiles: {
+    username: string
+    avatar_url: string | null
+  }
+}
+
+interface GameResponse {
+  id: string
+  game_rankings: GameRanking[]
+}
+
 const getMedalColor = (rank: number) => {
   switch (rank) {
     case 1:
@@ -49,12 +63,12 @@ export default function TournamentRankings({
       try {
         const { data, error } = await supabase
           .from('games')
-          .select(`
+          .select<string, GameResponse>(`
             id,
             game_rankings(
               participant_id,
               points,
-              profiles(
+              profiles:profiles!inner(
                 username,
                 avatar_url
               )

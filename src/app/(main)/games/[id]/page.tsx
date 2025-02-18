@@ -2,7 +2,7 @@ import { getProfile } from "@/utils/get-profile"
 import { createClient } from "@/utils/supabase/server"
 import { notFound } from "next/navigation"
 import GameHost from "../_components/game-host"
-import GameParticipant from "../_components/game-participant"
+import GameParticipant, { GameResponse } from "../_components/game-participant"
 
 export default async function GamePage({
   params: { id }
@@ -16,7 +16,7 @@ export default async function GamePage({
   
   const { data: game, error } = await supabase
     .from('games')
-    .select(`
+    .select<string, GameResponse>(`
       id,
       host_id,
       quiz_id,
