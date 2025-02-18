@@ -39,9 +39,9 @@ export default function ImportQuizzesPage() {
     } catch (error) {
       setStatus(prev => ({
         ...prev,
-        errors: [...prev.errors, 'Eroare la import: ' + error.message]
+        errors: [...prev.errors, 'Eroare la import: ']
       }))
-      toast.error('Eroare la import: ' + error.message)
+      toast.error('Eroare la import: ')
     } finally {
       setIsImporting(false)
     }
