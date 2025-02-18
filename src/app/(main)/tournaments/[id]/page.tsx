@@ -10,6 +10,26 @@ import { statusColors, statusLabels } from "@/lib/constants"
 import GameCard from "@/components/game-card"
 import TournamentRankings from "../_components/tournament-rankings"
 
+interface GameResponse {
+  id: string
+  title: string
+  created_at: string
+  is_finished: boolean
+  host_id: string
+  quiz_id: string
+  host: {
+    username: string
+  }
+  quiz: {
+    id: string
+    title: string
+    description: string
+  }
+  participants: {
+    count: number
+  }[]
+}
+
 export default async function TournamentPage({
   params: { id }
 }: {
@@ -63,14 +83,14 @@ export default async function TournamentPage({
   // Apoi luăm jocurile asociate turneului
   const { data: games } = await supabase
     .from('games')
-    .select(`
+    .select<string, GameResponse>(`
       id,
       title,
       is_finished,
       created_at,
       host_id,
       quiz_id,
-      host:profiles!host_id(
+      host:profiles!host_id!inner(
         username
       ),
       quiz:quizzes!inner(
