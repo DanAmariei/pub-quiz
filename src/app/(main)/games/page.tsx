@@ -89,7 +89,6 @@ export default function GamesPage() {
         .order('created_at', { ascending: false })
 
       if (data) {
-        console.log('Loaded games:', data) // Pentru debug
         setGames(data as unknown as Game[])
       }
     }
@@ -108,7 +107,6 @@ export default function GamesPage() {
           table: 'games'
         },
         (payload) => {
-          console.log('Game change:', payload) // Pentru debug
           fetchGames() // Reîncărcăm jocurile la orice modificare
         }
       )

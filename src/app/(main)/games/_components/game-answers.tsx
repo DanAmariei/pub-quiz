@@ -111,8 +111,6 @@ export default function GameAnswers({ gameId, userId, className, isHost }: GameA
     fetchData()
   }, [gameId, supabase, userId])
 
-  console.log(userAnswers)
-
   return (
     <Card className={cn("p-6", className)}>
       <h3 className="text-lg font-semibold mb-6">

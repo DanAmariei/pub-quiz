@@ -6,6 +6,8 @@ import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 
 import "./globals.css";
+import Footer from "@/components/footer";
+import Navbar from "@/components/navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -89,7 +91,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+        <div className="flex min-h-screen flex-col">
+          <Navbar />
+
+          <main className="container p-4 sm:p-6 flex-1">{children}</main>
+
+          <Footer />
+        </div>
         </ThemeProvider>
 
         <Toaster richColors position="top-center" />

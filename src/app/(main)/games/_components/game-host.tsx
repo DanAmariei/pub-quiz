@@ -59,8 +59,6 @@ export default function GameHost({
       console.error('Error fetching rankings:', error)
       return
     }
-
-    console.log('Rankings fetched:', data)
     setRankings(data)
   }
 
