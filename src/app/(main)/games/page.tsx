@@ -15,6 +15,7 @@ import type { Game } from '@/types/database'
 import RealTimeGames from "./_components/real-time-games"
 import { getProfile } from "@/utils/get-profile"
 import GameCard from "@/components/game-card"
+import { ColourfulText } from "@/components/ui/colourful-text"
 
 interface GameResponse {
   id: string
@@ -122,7 +123,9 @@ export default function GamesPage() {
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Terenul de joacă</h1>
+            <h1 className="text-3xl md:text-5xl font-bold text-center text-white relative z-2 font-sans">
+               <ColourfulText text="Terenul de joacă" /> <br />
+            </h1>
             <p className="text-muted-foreground">
               Vezi jocurile disponibile
             </p>
@@ -139,11 +142,11 @@ export default function GamesPage() {
 
         <div className="flex flex-col gap-4">
           {games.map((game) => (
-              <GameCard 
+            <GameCard
               key={game.id}
-                game={game}
-                showHost={true}
-              />
+              game={game}
+              showHost={true}
+            />
 
           ))}
 

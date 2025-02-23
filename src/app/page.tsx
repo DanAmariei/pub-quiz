@@ -20,7 +20,7 @@ export default function RootPage() {
         <div className="flex items-center justify-center mb-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/games" className="flex items-center gap-2">
-              Terenul de joacă
+              Către terenul de joacă
               <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>
