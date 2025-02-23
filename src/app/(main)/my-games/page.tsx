@@ -129,8 +129,6 @@ async function getGames() {
     }))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-  console.log('All games:', allGames)
-
   return allGames
 }
 

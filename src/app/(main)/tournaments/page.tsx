@@ -11,8 +11,6 @@ export default async function TurneePage() {
   const supabase = createClient();
   const { data: tournaments, error } = await supabase.rpc('get_tournaments_with_counts');
 
-  console.log('tournaments basic query:', { tournaments, error });
-
   return (
     <main className="flex-1">
       <div className="flex flex-col items-center gap-6">

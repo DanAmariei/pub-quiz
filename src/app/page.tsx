@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { GlowingEffect } from '@/components/ui/glowing-effect'
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'

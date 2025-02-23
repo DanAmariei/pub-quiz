@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import LoadingSpinner from "./loading-spinner"
+import { BackgroundLines } from "@/components/ui/background-lines"
 
 interface Ranking {
   points: number
@@ -30,10 +31,10 @@ interface ParticipantResponse {
   }
 }
 
-export default function GameRankings({ 
+export default function GameRankings({
   gameId,
   title = "Clasament",
-  className 
+  className
 }: GameRankingsProps) {
   const [rankings, setRankings] = useState<Ranking[]>([])
   const [isLoading, setIsLoading] = useState(true)

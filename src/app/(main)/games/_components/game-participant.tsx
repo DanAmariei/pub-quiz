@@ -345,13 +345,18 @@ export default function GameParticipant({
 
     const { error } = await supabase
       .from('participant_answers')
-      .insert({
+      .upsert({
         game_id: game.id,
         participant_id: user.id,
         question_id: activeQuestion.id,
         answer: selectedAnswer,
         is_correct: selectedAnswer === activeQuestion.correct_answer
-      })
+      },
+        {
+          onConflict: 'game_id,participant_id,question_id',
+          ignoreDuplicates: false
+        }
+      )
 
     if (error) {
       toast.error("Eroare la trimiterea răspunsului")
