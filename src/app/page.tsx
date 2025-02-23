@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 export default function RootPage() {
+
   return (
     <main className="flex-1 container py-8">
     <div className="flex flex-col items-center gap-12">
