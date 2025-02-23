@@ -122,9 +122,9 @@ export default function GamesPage() {
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Jocuri Active</h1>
+            <h1 className="text-3xl font-bold">Terenul de joacă</h1>
             <p className="text-muted-foreground">
-              Vezi jocurile disponibile sau creează unul nou
+              Vezi jocurile disponibile
             </p>
           </div>
           {(isHost || isAdmin) && (
