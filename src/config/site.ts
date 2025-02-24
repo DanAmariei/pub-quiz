@@ -12,13 +12,13 @@ type SiteConfig = {
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!;
 
 export const siteConfig: SiteConfig = {
-  name: "Quizmasters Hub",
+  name: "Quizmasters App",
   description:
-    "Where quiz-lovers meet and knowledge is shared!",
+    "Unde magia este cunoașterea!",
   url: baseUrl,
   ogImage: `${baseUrl}/open-graph.png`,
   links: {
-    twitter: "https://instagram.com/quizmasters_hub",
+    twitter: "https://x.com/quizmasters_hub",
     github: "https://github.com/DanAmariei",
   },
 };

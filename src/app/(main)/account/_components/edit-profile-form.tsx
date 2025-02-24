@@ -15,7 +15,7 @@ import type { Profile } from "@/types/database";
 import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
 interface EditProfileFormProps {
@@ -39,10 +39,11 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
     const result = await updateProfile(formData);
     
     if (result?.error) {
-      alert(result.error);
+      toast.error(result.error);
       return;
     }
 
+    toast.success("Profilul a fost actualizat cu succes!");
     router.refresh();
 
     const { error } = await supabase.auth.updateUser({
@@ -55,7 +56,14 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
   };
 
   async function handleFileUpload(file: File) {
-    console.log('Început upload pentru:', file.name)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast.error("Imaginea trebuie să fie mai mică de 5MB");
+      return;
+    }
+
+    toast.loading("Se încarcă imaginea...");
+    
     try {
       const formData = new FormData()
       formData.append('file', file)
@@ -65,18 +73,16 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
         body: formData
       })
 
-      console.log('Răspuns API:', response.status)
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Eroare necunoscută')
+        throw new Error(errorData.error || 'Eroare la încărcarea imaginii')
       }
 
       const data = await response.json()
-      console.log('URL primit:', data.secure_url)
-      return data.secure_url
+      setAvatarUrl(data.secure_url)
+      toast.success('Imaginea a fost încărcată cu succes!')
     } catch (error) {
-      console.error('Eroare upload:', error)
-      throw error
+      toast.error(error instanceof Error ? error.message : 'Eroare la încărcarea imaginii')
     }
   }
 
@@ -106,9 +112,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
                     const file = e.target.files?.[0]
                     if (file) {
                       try {
-                        const url = await handleFileUpload(file)
-                        setAvatarUrl(url)
-                        toast.success('Imagine încărcată cu succes!')
+                        await handleFileUpload(file)
                       } catch (error) {
                         toast.error(error instanceof Error ? error.message : 'Eroare la încărcare')
                       }
@@ -123,21 +127,12 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="username">Nume utilizator</Label>
+            <Label htmlFor="username">Nume Utilizator/Echipă</Label>
             <Input
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Nume echipă</Label>
-            <Input
-              id="full_name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
             />
           </div>
         </div>
