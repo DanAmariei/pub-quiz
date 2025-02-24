@@ -85,72 +85,73 @@ export default async function AccountPage() {
   }
 
   return (
-    <main className="flex-1">
-      <div className="flex flex-col gap-6 w-full max-w-2xl">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold">Contul Meu</h1>
-          <p className="text-muted-foreground">
-            Gestionează-ți informațiile personale
-          </p>
-        </div>
+    <main className="flex-1 flex items-center justify-center">
+      <div className="container py-8 w-full max-w-2xl">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2 text-center">
+            <h1 className="text-3xl font-bold">Contul Meu</h1>
+            <p className="text-muted-foreground">
+              Gestionează-ți informațiile personale
+            </p>
+          </div>
 
-        <div className="border rounded-lg p-6">
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex items-start gap-4">
+          <div className="border rounded-lg p-6">
+            <div className="flex flex-col items-center gap-4 mb-6">
               <Avatar className="w-16 h-16">
                 <AvatarImage src={profile?.avatar_url || undefined} />
                 <AvatarFallback>
                   {profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div>
+              <div className="text-center">
                 <h2 className="text-xl font-semibold">Informații Profil</h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Detaliile contului tău
                 </p>
               </div>
             </div>
-            
-          </div>
 
-          <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="mb-4">
-                  <Pencil className="w-4 h-4 mr-2" />
-                  Editează
-                </Button>
-              </DialogTrigger>
-              <EditProfileForm profile={profile} />
-            </Dialog>
-
-          <div className="space-y-6">
-            {/* Informații profil */}
-            <div className="grid gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Echipa</p>
-                <p className="font-medium">{profile?.username || "Nesetat"}</p>
-              </div>
+            <div className="flex justify-center mb-4">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Editează
+                  </Button>
+                </DialogTrigger>
+                <EditProfileForm profile={profile} />
+              </Dialog>
             </div>
 
-            <div className="border-t pt-6">
-              <h3 className="text-sm font-medium mb-4">Informații Cont</h3>
-              <div className="space-y-2">
-                <p className="text-sm">
-                  <span className="text-muted-foreground">Email:</span>{" "}
-                  {user.email}
-                </p>
-                <p className="text-sm">
-                  <span className="text-muted-foreground">Cont creat:</span>{" "}
-                  {new Date(user.created_at).toLocaleDateString("ro-RO")}
-                </p>
-                <p className="text-sm">
-                  <span className="text-muted-foreground">Rol:</span>{" "}
-                  {profile?.is_admin 
-                    ? "Administrator" 
-                    : profile?.is_host 
-                      ? "Host" 
-                      : "Utilizator"}
-                </p>
+            <div className="space-y-6">
+              {/* Informații profil */}
+              <div className="grid gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Username - nume echipă</p>
+                  <p className="font-medium">{profile?.username || "Nesetat"}</p>
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <h3 className="text-sm font-medium mb-4">Informații Cont</h3>
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">Email:</span>{" "}
+                    {user.email}
+                  </p>
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">Cont creat:</span>{" "}
+                    {new Date(user.created_at).toLocaleDateString("ro-RO")}
+                  </p>
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">Rol:</span>{" "}
+                    {profile?.is_admin 
+                      ? "Administrator" 
+                      : profile?.is_host 
+                        ? "Host" 
+                        : "Utilizator"}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

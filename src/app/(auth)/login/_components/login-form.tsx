@@ -7,13 +7,13 @@ import { createClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { z } from "zod";
 
 export const loginFormSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email("Adresa de email nu este validă"),
   password: z.string().min(8, {
-    message: "Password must be at least 8 characters.",
+    message: "Parola trebuie să aibă minim 8 caractere.",
   }),
 });
 
@@ -26,7 +26,6 @@ const defaultValues: LoginValuesType = {
 
 const LoginForm = () => {
   const router = useRouter();
-
   const supabase = createClient();
 
   const form = useForm<LoginValuesType>({
@@ -37,11 +36,23 @@ const LoginForm = () => {
   async function handleLogin(values: LoginValuesType) {
     const { error } = await supabase.auth.signInWithPassword(values);
 
-    if (error) return toast.error(error.message);
+    if (error) {
+      const errorMessage = error.message === "Invalid login credentials"
+        ? "Email sau parolă incorectă"
+        : error.message === "Email not confirmed"
+        ? "Adresa de email nu a fost confirmată"
+        : "A apărut o eroare la autentificare. Încearcă din nou.";
+      
+      toast.error(errorMessage);
+      return;
+    }
 
-    toast.success("Login successful");
-
+    toast.success("Autentificare reușită!");
+    
+    // Redirecționăm către homepage și forțăm un refresh complet
+    router.push('/');
     router.refresh();
+    window.location.reload();
   }
 
   return (
@@ -53,20 +64,22 @@ const LoginForm = () => {
         <InputForm
           label="Email"
           name="email"
-          placeholder="hello@quizmasters.ro"
-          description=""
+          placeholder="Adresa de email"
+          description="Introdu adresa de email"
           required
         />
 
         <InputForm
           type="password"
-          label="Password"
+          label="Parolă"
           name="password"
-          description=""
+          description="Introdu parola contului tău"
           required
         />
 
-        <Button>Login</Button>
+        <Button type="submit" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Se autentifică..." : "Autentificare"}
+        </Button>
       </form>
     </Form>
   );

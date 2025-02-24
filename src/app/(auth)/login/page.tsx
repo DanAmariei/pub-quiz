@@ -25,11 +25,11 @@ export default async function LoginPage() {
       <div className="mx-auto max-w-80 flex flex-col justify-center space-y-6 ">
         <div className="flex flex-col space-y-2 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Welcome back
+            Bine ai revenit!
           </h1>
 
           <p className="text-sm text-muted-foreground">
-            Enter your email and password to sign in to your account
+            Introdu adresa de email și parola pentru a te autentifica
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export default async function LoginPage() {
             href="/register"
             className="hover:text-brand underline underline-offset-4"
           >
-            Don&apos;t have an account? Register
+            Nu ai cont? Înregistrează-te
           </Link>
         </p>
       </div>

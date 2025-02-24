@@ -25,11 +25,11 @@ export default async function RegisterPage() {
       <div className="mx-auto max-w-80 flex flex-col justify-center space-y-6 ">
         <div className="flex flex-col space-y-2 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Create an account
+            Crează un cont
           </h1>
 
           <p className="text-sm text-muted-foreground">
-            Enter your email and password to create your account
+            Introdu adresa de email și parola pentru a crea contul
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export default async function RegisterPage() {
             href="/login"
             className="hover:text-brand underline underline-offset-4"
           >
-            Already have an account? Login
+            Ai deja un cont? Login
           </Link>
         </p>
       </div>
