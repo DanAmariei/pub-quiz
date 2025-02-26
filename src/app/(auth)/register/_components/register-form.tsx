@@ -10,10 +10,18 @@ import { toast } from "sonner";
 
 export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const router = useRouter();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast.error("Parolele nu coincid!");
+      return;
+    }
+
     setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
@@ -48,6 +56,18 @@ export default function RegisterForm() {
           id="password"
           name="password"
           type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="confirmPassword">Confirmă Parola</Label>
+        <Input
+          id="confirmPassword"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
           required
         />
       </div>

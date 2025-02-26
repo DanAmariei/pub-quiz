@@ -17,6 +17,7 @@ import { useFormStatus } from "react-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface EditProfileFormProps {
   profile: Profile | null;
@@ -27,6 +28,10 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
   const [username, setUsername] = useState(profile?.username || '');
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
+  const [email, setEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +58,45 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
     if (error) {
       console.error('Eroare la actualizarea metadatelor:', error.message);
     }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      toast.error("Parolele noi nu coincid!");
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    })
+
+    if (error) {
+      toast.error("Eroare la actualizarea parolei");
+      return;
+    }
+
+    toast.success("Parola a fost actualizată cu succes!");
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
+  const handleUpdateEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const { error } = await supabase.auth.updateUser({
+      email: email,
+    })
+
+    if (error) {
+      toast.error("Eroare la actualizarea emailului");
+      return;
+    }
+
+    toast.success("Email actualizat cu succes! Verifică-ți emailul pentru confirmare.");
+    setEmail('');
   };
 
   async function handleFileUpload(file: File) {
@@ -87,58 +131,120 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
   }
 
   return (
-    <DialogContent>
+    <DialogContent className="sm:max-w-[600px]">
       <DialogHeader>
         <DialogTitle>Editează Profilul</DialogTitle>
       </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={avatarUrl || ''} />
-              <AvatarFallback>
-                {profile?.username?.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="flex-1 space-y-2">
+      <Tabs defaultValue="profile">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="profile">Profil</TabsTrigger>
+          <TabsTrigger value="email">Email</TabsTrigger>
+          <TabsTrigger value="password">Parolă</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profile">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={avatarUrl || ''} />
+                  <AvatarFallback>
+                    {profile?.username?.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1 space-y-2">
+                  <div className="space-y-2">
+                    <Label>Încarcă o imagine de profil</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          try {
+                            await handleFileUpload(file)
+                          } catch (error) {
+                            toast.error(error instanceof Error ? error.message : 'Eroare la încărcare')
+                          }
+                        }
+                      }}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Formate acceptate: JPG, JPEG, PNG, WEBP (max. 5MB)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label>Încarcă o imagine de profil</Label>
+                <Label htmlFor="username">Nume Utilizator/Echipă</Label>
                 <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (file) {
-                      try {
-                        await handleFileUpload(file)
-                      } catch (error) {
-                        toast.error(error instanceof Error ? error.message : 'Eroare la încărcare')
-                      }
-                    }
-                  }}
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
                 />
-                <p className="text-sm text-muted-foreground">
-                  Formate acceptate: JPG, JPEG, PNG, WEBP (max. 5MB)
-                </p>
               </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="username">Nume Utilizator/Echipă</Label>
-            <Input
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-        </div>
+            <SubmitButton />
+          </form>
+        </TabsContent>
 
-        <SubmitButton />
-      </form>
+        <TabsContent value="email">
+          <form onSubmit={handleUpdateEmail} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Nou</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit">Actualizează Email</Button>
+          </form>
+        </TabsContent>
+
+        <TabsContent value="password">
+          <form onSubmit={handleUpdatePassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Parola Actuală</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">Parola Nouă</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmă Parola Nouă</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit">Actualizează Parola</Button>
+          </form>
+        </TabsContent>
+      </Tabs>
     </DialogContent>
   );
 }
