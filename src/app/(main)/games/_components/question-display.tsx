@@ -73,7 +73,12 @@ export default function QuestionDisplay({
 
         {video && (
           <div className="mt-4 relative aspect-video w-full overflow-hidden rounded-lg">
-            <video controls className="w-full">
+            <video 
+              controls 
+              playsInline 
+              controlsList="nodownload nofullscreen"
+              className="w-full"
+            >
               <source src={video} type="video/mp4" />
               Your browser does not support the video element.
             </video>

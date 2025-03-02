@@ -30,9 +30,22 @@ export default function GameHeader({
 
   return (
     <div className="space-y-2 w-full">
-      <div className="flex justify-between items-start">
+      <div >
+
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold">{quizTitle}</h1>
+
+          <div className="flex justify-between items-start">
+            <h1 className="text-2xl font-bold">{quizTitle}</h1>
+            {isFinished && (
+              <Button variant="outline" asChild className="ml-auto">
+                <Link href="/games" className="flex items-center gap-2 ml-auto">
+                  <ArrowLeft className="w-4 h-4" />
+                  Înapoi la jocuri
+                </Link>
+              </Button>
+            )}
+          </div>
+
           {gameTitle && (
             <p className="text-muted-foreground">
               Joc: {gameTitle}
@@ -42,18 +55,17 @@ export default function GameHeader({
             <span className="font-medium">{participants.length}</span>
             {' '}{participants.length !== 1 ? 'participanți' : 'participant'} în acest joc
           </p>
+
+        </div>
+
+        <div className="space-y-2">
+
           {participants.length > 0 && (
             <ParticipantAvatars participants={participants} />
           )}
         </div>
-        {isFinished && (
-          <Button variant="outline" asChild className="ml-auto">
-            <Link href="/games" className="flex items-center gap-2 ml-auto">
-              <ArrowLeft className="w-4 h-4" />
-              Înapoi la jocuri
-            </Link>
-          </Button>
-        )}
+
+
       </div>
     </div>
   )
