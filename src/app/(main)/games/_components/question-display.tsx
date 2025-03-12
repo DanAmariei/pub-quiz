@@ -43,10 +43,10 @@ export default function QuestionDisplay({
             {questionNumber}/{totalQuestions}
           </Badge>
         )}
-        <p className="font-semibold mb-4">
+        <p className="font-semibold mb-4 select-none">
           {questionNumber ? `Întrebarea ${questionNumber}` : 'Întrebare'}
         </p>
-        <h2 className="text-xl font-semibold mb-4">{question}</h2>
+        <h2 className="text-xl font-semibold mb-4 select-none text-center">{question}</h2>
 
         {image && (
           <div className="mt-4 relative aspect-video w-full overflow-hidden rounded-lg">
@@ -96,7 +96,7 @@ export default function QuestionDisplay({
             key={index}
             onClick={() => isInteractive && onAnswerSelect?.(answer)}
             className={cn(
-              "p-4 border rounded-lg transition-colors",
+              "p-4 border rounded-lg transition-colors select-none",
               "border-gray-200 dark:border-gray-700",
               "bg-white dark:bg-gray-800",
               "border-gray-200 dark:border-gray-700",
