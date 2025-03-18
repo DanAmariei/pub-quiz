@@ -473,7 +473,7 @@ export default function GameParticipant({
                 <Button
                   onClick={handleSubmitAnswer}
                   disabled={!selectedAnswer}
-                  className="ml-auto"
+                  className="mx-auto font-bold text-xl mt-5"
                 >
                   Trimite Răspunsul
                 </Button>

@@ -1,14 +1,8 @@
 import { getProfile } from "@/utils/get-profile"
 import { createClient } from "@/utils/supabase/server"
 import { notFound, redirect } from "next/navigation"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { CalendarIcon, Users, Trophy } from "lucide-react"
-import { formatDate } from "@/lib/utils"
-import { statusColors, statusLabels } from "@/lib/constants"
-import GameCard from "@/components/game-card"
 import TournamentRankings from "../_components/tournament-rankings"
+import TournamentGames from "./_components/tournament-games"
 
 interface GameResponse {
   id: string
@@ -39,7 +33,7 @@ export default async function TournamentPage({
   if (!user) return null
 
   const supabase = createClient()
-  
+
   // Mai întâi luăm datele despre turneu
   const { data: tournament, error } = await supabase
     .from('tournaments')
@@ -61,7 +55,7 @@ export default async function TournamentPage({
 
   // Verificăm dacă userul are acces la acest turneu
   const canAccess = profile?.is_host || profile?.is_admin
-  
+
   if (!canAccess) {
     // Verificăm dacă userul a participat la vreun joc din acest turneu
     const { data: participations } = await supabase
@@ -101,6 +95,7 @@ export default async function TournamentPage({
       participants:game_participants(count)
     `)
     .eq('tournament_id', id)
+    .order('created_at', { ascending: false })
 
   // Luăm numărul de participanți
   const { count: playersCount } = await supabase
@@ -125,38 +120,41 @@ export default async function TournamentPage({
     }
   })) || []
 
+  const groupedGames = formattedGames.reduce<Record<string, typeof formattedGames>>((acc, game) => {
+    const date = new Date(game.created_at).toLocaleDateString('ro-RO');
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(game);
+    return acc;
+  }, {});
+
   return (
     <main className="">
       <div className="flex flex-col gap-8 max-w-3xl mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <div className="">
           <div>
-            <h1 className="text-3xl font-bold">{tournament.name}</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-3xl font-bold text-center">{tournament.name}</h1>
+            <p className="text-muted-foreground mt-1 text-center">
               {tournament.description}
             </p>
           </div>
         </div>
         {/* Adăugăm clasamentul aici */}
-        <TournamentRankings 
-          tournamentId={tournament.id} 
+        <TournamentRankings
+          tournamentId={tournament.id}
           className="mt-4"
         />
 
         <div className="grid gap-4 mt-8">
           <h2 className="text-xl font-semibold">Jocuri în acest turneu</h2>
-          {formattedGames.map((game) => (
-            <GameCard 
-              key={game.id}
-              game={game}
-              showHost={true}
-            />
-          ))}
-          {formattedGames.length === 0 && (
-            <p className="text-muted-foreground text-center py-8">
-              Nu există jocuri în acest turneu.
-            </p>
-          )}
+          
+          {/* Componenta client pentru jocurile grupate */}
+          <TournamentGames 
+            groupedGames={groupedGames} 
+            tournamentId={tournament.id}
+          />
         </div>
       </div>
     </main>
